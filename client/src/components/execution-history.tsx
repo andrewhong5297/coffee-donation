@@ -122,7 +122,7 @@ export function ExecutionHistory() {
                         {userFarcasterData?.username ? (
                           <>
                             <a 
-                              href={`https://farcaster.com/${userFarcasterData.username}`}
+                              href={`https://farcaster.xyz/${userFarcasterData.username}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="hover:coffee-text-600 transition-colors"

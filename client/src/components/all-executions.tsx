@@ -125,7 +125,7 @@ export function AllExecutions() {
                         {step.farcasterData?.username ? (
                           <>
                             <a 
-                              href={`https://farcaster.com/${step.farcasterData.username}`}
+                              href={`https://farcaster.xyz/${step.farcasterData.username}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="hover:coffee-text-600 transition-colors"
