@@ -25,16 +25,16 @@ export interface EvaluationRequest {
 export interface EvaluationResponse {
   finalInputValues: Record<string, string>;
   finalPayableAmount: string;
-  calldata: {
-    to: string;
-    data: string;
-    value: string;
-  };
+  finalContractAddress: string;
+  callData: string;
+  allInputsValidAndFilled: boolean;
 }
 
 export interface ExecutionRequest {
-  primaryNodeId: string;
+  nodeId: string;
   transactionHash: string;
+  walletAddress: string;
+  executionType: "latest" | "new";
 }
 
 export interface ExecutionHistoryItem {
@@ -112,16 +112,13 @@ export class HerdAPI {
   }
 
   static buildUserInputs(amount: string): UserInputs {
-    // Based on the trail metadata, we need to build user inputs for the FiatTokenV2_2.transfer function
-    // The specific input structure would come from the trail's requiredUserInputs
-    // For USDC transfer, we typically need 'to' address and 'amount'
+    // Based on the trail step data, the only required user input is 'inputs.value'
+    // The 'to' address and decimals are hardcoded by the trail creator
     return {
       [TRAIL_CONFIG.primaryNodeId]: {
-        'inputs.amount': {
+        'inputs.value': {
           value: amount,
         },
-        // The 'to' address would be hardcoded by the trail creator (ilemi's address)
-        // so we don't need to provide it in user inputs
       },
     };
   }

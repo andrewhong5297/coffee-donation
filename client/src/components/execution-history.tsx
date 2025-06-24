@@ -75,8 +75,8 @@ export function ExecutionHistory() {
                   </div>
                   <div>
                     <p className="text-sm font-medium coffee-text-800">
-                      {execution.finalInputValues?.amount ? 
-                        `$${execution.finalInputValues.amount} USDC` : 
+                      {execution.finalInputValues?.['inputs.value'] ? 
+                        `$${execution.finalInputValues['inputs.value']} USDC` : 
                         'USDC Donation'
                       }
                     </p>

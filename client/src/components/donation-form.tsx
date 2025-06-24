@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseUnits } from 'viem';
+import { useState, useEffect } from 'react';
+import { useAccount, useSendTransaction, useSwitchChain } from 'wagmi';
+import { base } from 'wagmi/chains';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,7 +23,15 @@ export function DonationForm() {
   
   const evaluateInputs = useEvaluateInputs();
   const createExecution = useCreateExecution();
-  const { writeContract } = useWriteContract();
+  const { sendTransaction, isPending: isTxPending } = useSendTransaction();
+  const { switchChain } = useSwitchChain();
+
+  // Switch to Base network when wallet connects
+  useEffect(() => {
+    if (address) {
+      switchChain({ chainId: base.id });
+    }
+  }, [switchChain, address]);
 
   const handleQuickAmount = (quickAmount: number) => {
     setAmount(quickAmount.toString());
@@ -61,28 +69,16 @@ export function DonationForm() {
         userInputs,
       });
 
+      if (!evaluationResponse.allInputsValidAndFilled) {
+        throw new Error('Invalid inputs provided to the trail');
+      }
+
       // Step 2: Submit transaction using the calldata
       const txHash = await new Promise<string>((resolve, reject) => {
-        writeContract(
+        sendTransaction(
           {
-            address: evaluationResponse.calldata.to as `0x${string}`,
-            abi: [
-              {
-                name: 'transfer',
-                type: 'function',
-                inputs: [
-                  { name: 'to', type: 'address' },
-                  { name: 'amount', type: 'uint256' }
-                ],
-                outputs: [{ name: '', type: 'bool' }],
-                stateMutability: 'nonpayable',
-              },
-            ],
-            functionName: 'transfer',
-            args: [
-              evaluationResponse.finalInputValues.to,
-              parseUnits(amount, 6) // USDC has 6 decimals
-            ],
+            to: evaluationResponse.finalContractAddress as `0x${string}`,
+            data: evaluationResponse.callData as `0x${string}`,
             value: BigInt(evaluationResponse.finalPayableAmount || '0'),
           },
           {
@@ -94,8 +90,10 @@ export function DonationForm() {
 
       // Step 3: Update execution record
       await createExecution.mutateAsync({
-        primaryNodeId: HerdAPI.getTrailConfig().primaryNodeId,
+        nodeId: HerdAPI.getTrailConfig().primaryNodeId,
         transactionHash: txHash,
+        walletAddress: address,
+        executionType: 'latest',
       });
 
       toast({
@@ -204,10 +202,10 @@ export function DonationForm() {
           {/* Donation Button */}
           <Button
             type="submit"
-            disabled={!isConnected || isProcessing || !amount}
+            disabled={!isConnected || isProcessing || isTxPending || !amount}
             className="w-full accent-bg-500 hover:accent-bg-600 disabled:bg-gray-300 text-white py-4 px-6 rounded-lg font-semibold text-lg transition-colors duration-200"
           >
-            {isProcessing ? (
+            {isProcessing || isTxPending ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Processing donation...
