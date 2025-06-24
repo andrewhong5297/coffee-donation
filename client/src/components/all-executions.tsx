@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useAccount } from 'wagmi';
 import { HerdAPI } from '@/lib/herd-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,6 +7,7 @@ import { Clock, Check, Coffee, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export function AllExecutions() {
+  const { address } = useAccount();
   const { data, isLoading, error } = useQuery({
     queryKey: ['all-executions'],
     queryFn: () => HerdAPI.getAllExecutions(),
@@ -65,21 +67,23 @@ export function AllExecutions() {
         </h4>
         
         {(() => {
-          // Get all actual donation steps across all wallets and executions
-          const allDonationSteps = allWalletExecutions.flatMap(([walletAddress, walletData]) => 
-            walletData.executions.flatMap((execution) =>
-              (execution.steps || [])
-                .filter(step => 
-                  step.stepNumber > 0 && 
-                  step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000'
-                )
-                .map(step => ({
-                  ...step,
-                  walletAddress,
-                  farcasterData: walletData.farcasterData
-                }))
-            )
-          );
+          // Get all actual donation steps across all wallets and executions, excluding connected wallet
+          const allDonationSteps = allWalletExecutions
+            .filter(([walletAddress]) => walletAddress.toLowerCase() !== address?.toLowerCase())
+            .flatMap(([walletAddress, walletData]) => 
+              walletData.executions.flatMap((execution) =>
+                (execution.steps || [])
+                  .filter(step => 
+                    step.stepNumber > 0 && 
+                    step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000'
+                  )
+                  .map(step => ({
+                    ...step,
+                    walletAddress,
+                    farcasterData: walletData.farcasterData
+                  }))
+              )
+            );
 
           // Sort by creation date, most recent first
           const sortedSteps = allDonationSteps.sort((a, b) => 

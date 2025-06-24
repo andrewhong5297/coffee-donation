@@ -59,6 +59,10 @@ export function ExecutionHistory() {
   const userExecutions = addressKey && data?.executions?.[addressKey] 
     ? data.executions[addressKey].executions 
     : [];
+  
+  const userFarcasterData = addressKey && data?.executions?.[addressKey] 
+    ? data.executions[addressKey].farcasterData 
+    : null;
 
 
 
@@ -97,16 +101,55 @@ export function ExecutionHistory() {
               {allDonationSteps.map((step) => (
                 <div key={step.id} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <Check className="text-green-600 w-4 h-4" />
-                    </div>
+                    {userFarcasterData?.pfp_url ? (
+                      <img 
+                        src={userFarcasterData.pfp_url} 
+                        alt={userFarcasterData.username || 'User'}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check className="text-green-600 w-4 h-4" />
+                      </div>
+                    )}
                     <div>
                       <p className="text-sm font-medium coffee-text-800">
                         USDC Donation
                       </p>
-                      <p className="text-xs coffee-text-500">
-                        {formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}
-                      </p>
+                      <div className="flex items-center space-x-2 text-xs coffee-text-500">
+                        <span>{formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}</span>
+                        <span>•</span>
+                        {userFarcasterData?.username ? (
+                          <>
+                            <a 
+                              href={`https://farcaster.com/${userFarcasterData.username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:coffee-text-600 transition-colors"
+                            >
+                              {userFarcasterData.username}
+                            </a>
+                            <span>•</span>
+                            <a 
+                              href={`https://herd.eco/base/wallet/${address}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:coffee-text-600 transition-colors"
+                            >
+                              {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''}
+                            </a>
+                          </>
+                        ) : (
+                          <a 
+                            href={`https://herd.eco/base/wallet/${address}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:coffee-text-600 transition-colors"
+                          >
+                            {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''}
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <a
