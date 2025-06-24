@@ -59,44 +59,51 @@ export function ExecutionHistory() {
           Your Donations
         </h4>
         
-        {executions.length === 0 ? (
-          <div className="text-center py-8 coffee-text-500">
-            <Coffee className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">No donations yet</p>
-            <p className="text-xs">Your donation history will appear here</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {executions.map((execution) => (
-              <div key={execution.id} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <Check className="text-green-600 w-4 h-4" />
+{(() => {
+          // Get all actual donation steps across all executions
+          const allDonationSteps = executions.flatMap((execution) => 
+            execution.steps.filter(step => 
+              step.stepNumber > 0 && 
+              step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000'
+            )
+          );
+
+          return allDonationSteps.length === 0 ? (
+            <div className="text-center py-8 coffee-text-500">
+              <Coffee className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">No donations yet</p>
+              <p className="text-xs">Your donation history will appear here</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {allDonationSteps.map((step) => (
+                <div key={step.id} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <Check className="text-green-600 w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium coffee-text-800">
+                        USDC Donation
+                      </p>
+                      <p className="text-xs coffee-text-500">
+                        {formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium coffee-text-800">
-                      {execution.finalInputValues?.['inputs.value'] ? 
-                        `$${execution.finalInputValues['inputs.value']} USDC` : 
-                        'USDC Donation'
-                      }
-                    </p>
-                    <p className="text-xs coffee-text-500">
-                      {formatDistanceToNow(new Date(execution.createdAt), { addSuffix: true })}
-                    </p>
-                  </div>
+                  <a
+                    href={`https://basescan.org/tx/${step.txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:text-blue-600 transition-colors"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
                 </div>
-                <a
-                  href={`https://basescan.org/tx/${execution.transactionHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-600 transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          );
+        })()}
       </CardContent>
     </Card>
   );

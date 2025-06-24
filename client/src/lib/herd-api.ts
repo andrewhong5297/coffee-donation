@@ -39,11 +39,20 @@ export interface ExecutionRequest {
 
 export interface ExecutionHistoryItem {
   id: string;
-  primaryNodeId: string;
-  transactionHash: string;
-  status: string;
+  walletAddress: string;
   createdAt: string;
-  finalInputValues?: Record<string, string>;
+  updatedAt: string;
+  steps: Array<{
+    id: string;
+    stepNumber: number;
+    stepType: string;
+    contractAddress: string;
+    functionSignature: string;
+    nodeId: string;
+    txHash: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
 }
 
 export interface ExecutionHistoryResponse {
