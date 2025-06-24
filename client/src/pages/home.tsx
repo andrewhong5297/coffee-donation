@@ -1,8 +1,9 @@
 import { WalletConnection } from '@/components/wallet-connection';
 import { DonationForm } from '@/components/donation-form';
 import { ExecutionHistory } from '@/components/execution-history';
+import { AllExecutions } from '@/components/all-executions';
 import { Card, CardContent } from '@/components/ui/card';
-import { Coffee, Users, Network } from 'lucide-react';
+import { Coffee } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -73,8 +74,11 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Recent Activity */}
+            {/* Your Donations */}
             <ExecutionHistory />
+
+            {/* Community Donations */}
+            <AllExecutions />
           </div>
         </div>
       </main>

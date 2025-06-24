@@ -1,4 +1,5 @@
 import { useExecutionHistory } from '@/hooks/use-herd-trail';
+import { useAccount } from 'wagmi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, Check, Coffee, ExternalLink } from 'lucide-react';
@@ -6,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 
 export function ExecutionHistory() {
   const { data, isLoading, error } = useExecutionHistory();
+  const { address } = useAccount();
 
   if (isLoading) {
     return (
@@ -49,7 +51,10 @@ export function ExecutionHistory() {
     );
   }
 
-  const executions = data?.executions || [];
+  // Extract executions for the connected wallet
+  const userExecutions = address && data?.executions?.[address] 
+    ? data.executions[address].executions 
+    : [];
 
   return (
     <Card>
@@ -60,9 +65,9 @@ export function ExecutionHistory() {
         </h4>
         
 {(() => {
-          // Get all actual donation steps across all executions
-          const allDonationSteps = executions.flatMap((execution) => 
-            execution.steps.filter(step => 
+          // Get all actual donation steps across user's executions
+          const allDonationSteps = userExecutions.flatMap((execution) => 
+            (execution.steps || []).filter(step => 
               step.stepNumber > 0 && 
               step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000'
             )
@@ -92,7 +97,7 @@ export function ExecutionHistory() {
                     </div>
                   </div>
                   <a
-                    href={`https://basescan.org/tx/${step.txHash}`}
+                    href={`https://herd.eco/base/tx/${step.txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:text-blue-600 transition-colors"

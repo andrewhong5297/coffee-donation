@@ -56,7 +56,24 @@ export interface ExecutionHistoryItem {
 }
 
 export interface ExecutionHistoryResponse {
-  executions: ExecutionHistoryItem[];
+  totals: {
+    executions: number;
+    wallets: number;
+  };
+  executions: {
+    [walletAddress: string]: {
+      executions: ExecutionHistoryItem[];
+      farcasterData?: {
+        username: string;
+        pfp_url: string;
+        display_name: string;
+        fid: number;
+        bio: string;
+        followers: number;
+        following: number;
+      };
+    };
+  };
 }
 
 export class HerdAPI {
@@ -102,16 +119,19 @@ export class HerdAPI {
   }
 
   static async getExecutionHistory(walletAddress: string): Promise<ExecutionHistoryResponse> {
-    const response = await fetch(`${this.getExecutionUrl()}?walletAddress=${encodeURIComponent(walletAddress)}`, {
-      method: 'GET',
+    const response = await fetch(`${this.getExecutionUrl()}/query`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        walletAddresses: [walletAddress]
+      }),
     });
 
     if (!response.ok) {
       if (response.status === 404) {
-        return { executions: [] };
+        return { totals: { executions: 0, wallets: 0 }, executions: {} };
       }
       const errorText = await response.text();
       throw new Error(`Failed to fetch execution history: ${response.status} ${errorText}`);
@@ -130,6 +150,28 @@ export class HerdAPI {
         },
       },
     };
+  }
+
+  static async getAllExecutions(): Promise<ExecutionHistoryResponse> {
+    const response = await fetch(`${this.getExecutionUrl()}/query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        walletAddresses: [] // Empty array to get all executions
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { totals: { executions: 0, wallets: 0 }, executions: {} };
+      }
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch all executions: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
   }
 
   static getTrailConfig() {
