@@ -2,7 +2,7 @@ import { WalletConnection } from '@/components/wallet-connection';
 import { DonationForm } from '@/components/donation-form';
 import { ExecutionHistory } from '@/components/execution-history';
 import { Card, CardContent } from '@/components/ui/card';
-import { Coffee, Users, Network, Shield, Link as LinkIcon, Coins } from 'lucide-react';
+import { Coffee, Users, Network } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -85,27 +85,6 @@ export default function Home() {
 
             {/* Recent Activity */}
             <ExecutionHistory />
-
-            {/* Trust Indicators */}
-            <Card>
-              <CardContent className="p-6">
-                <h4 className="font-semibold coffee-text-800 mb-4">Security & Trust</h4>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center space-x-3">
-                    <Shield className="text-green-500 w-4 h-4" />
-                    <span className="coffee-text-600">Blockchain secured</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <LinkIcon className="text-blue-500 w-4 h-4" />
-                    <span className="coffee-text-600">Base network</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Coins className="text-yellow-500 w-4 h-4" />
-                    <span className="coffee-text-600">USDC payments</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </main>
