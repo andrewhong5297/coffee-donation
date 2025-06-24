@@ -100,9 +100,17 @@ export function AllExecutions() {
               {recentSteps.map((step, index) => (
                 <div key={`${step.id}-${index}`} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <Check className="text-green-600 w-4 h-4" />
-                    </div>
+                    {step.farcasterData?.pfp_url ? (
+                      <img 
+                        src={step.farcasterData.pfp_url} 
+                        alt={step.farcasterData.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Check className="text-green-600 w-4 h-4" />
+                      </div>
+                    )}
                     <div>
                       <p className="text-sm font-medium coffee-text-800">
                         USDC Donation
@@ -110,14 +118,36 @@ export function AllExecutions() {
                       <div className="flex items-center space-x-2 text-xs coffee-text-500">
                         <span>{formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}</span>
                         <span>•</span>
-                        <a 
-                          href={`https://herd.eco/base/wallet/${step.walletAddress}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:coffee-text-600 transition-colors"
-                        >
-                          {step.farcasterData?.username || `${step.walletAddress.slice(0, 6)}...${step.walletAddress.slice(-4)}`}
-                        </a>
+                        {step.farcasterData?.username ? (
+                          <>
+                            <a 
+                              href={`https://farcaster.com/${step.farcasterData.username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:coffee-text-600 transition-colors"
+                            >
+                              {step.farcasterData.username}
+                            </a>
+                            <span>•</span>
+                            <a 
+                              href={`https://herd.eco/base/wallet/${step.walletAddress}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:coffee-text-600 transition-colors"
+                            >
+                              {step.walletAddress.slice(0, 6)}...{step.walletAddress.slice(-4)}
+                            </a>
+                          </>
+                        ) : (
+                          <a 
+                            href={`https://herd.eco/base/wallet/${step.walletAddress}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:coffee-text-600 transition-colors"
+                          >
+                            {step.walletAddress.slice(0, 6)}...{step.walletAddress.slice(-4)}
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -7,7 +7,7 @@ export function useExecutionHistory() {
 
   return useQuery({
     queryKey: ['execution-history', address],
-    queryFn: () => address ? HerdAPI.getExecutionHistory(address) : Promise.resolve({ executions: [] }),
+    queryFn: () => address ? HerdAPI.getExecutionHistory(address) : Promise.resolve({ totals: { executions: 0, wallets: 0 }, executions: {} }),
     enabled: !!address,
   });
 }

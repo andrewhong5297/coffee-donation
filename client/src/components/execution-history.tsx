@@ -51,10 +51,16 @@ export function ExecutionHistory() {
     );
   }
 
-  // Extract executions for the connected wallet
-  const userExecutions = address && data?.executions?.[address] 
-    ? data.executions[address].executions 
+  // Extract executions for the connected wallet - normalize address to lowercase
+  const normalizedAddress = address?.toLowerCase();
+  const addressKey = normalizedAddress && data?.executions ? 
+    Object.keys(data.executions).find(key => key.toLowerCase() === normalizedAddress) : null;
+  
+  const userExecutions = addressKey && data?.executions?.[addressKey] 
+    ? data.executions[addressKey].executions 
     : [];
+
+
 
   return (
     <Card>
@@ -74,11 +80,18 @@ export function ExecutionHistory() {
           );
 
           return allDonationSteps.length === 0 ? (
-            <div className="text-center py-8 coffee-text-500">
-              <Coffee className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">No donations yet</p>
-              <p className="text-xs">Your donation history will appear here</p>
-            </div>
+            address ? (
+              <div className="text-center py-8 coffee-text-500">
+                <Coffee className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No donations yet</p>
+                <p className="text-xs">Your donations will appear here</p>
+              </div>
+            ) : (
+              <div className="text-center py-8 coffee-text-500">
+                <Coffee className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">Connect wallet to see your donations</p>
+              </div>
+            )
           ) : (
             <div className="space-y-3">
               {allDonationSteps.map((step) => (
