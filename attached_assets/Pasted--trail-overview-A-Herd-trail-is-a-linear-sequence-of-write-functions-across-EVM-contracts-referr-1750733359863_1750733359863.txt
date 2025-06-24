@@ -1,0 +1,518 @@
+<trail_overview>
+A Herd "trail" is a linear sequence of write functions across EVM contracts (referred to as "primary nodes" or "steps"), where the creator determines how function input values will be derived (creator hardcoded, read functions/events, code, inputted by user). The consumer of the trail will fill in user inputs and then submit one transaction for each step. You are building for the consumer of the trail. Trails come with an API that can be built on top of.
+
+Here is your plan to build on top of this trail:
+- Read and understand the steps and inputs of the trail, and how the data flows across source nodes to the primary node(s). You can reference the <trail_metadata>, <primary_steps>, and <step_data> sections to get these details.
+- Build your code around the required user inputs for each step, in the format required for the evaluations API. You can reference the <submitting_inputs_to_get_transaction_calldata> section for this.
+- Build the wallet connection, and then a transaction submission handler with wagmi/viem that calls the evaluations API, submits the transaction to the blockchain, and immediately pushes the transaction hash to the executions API. You can reference the <setting_up_wallet_connection_and_transaction_submission> section for this.
+  - You could put the evaluations API call in the handler (recommended), or show the user the returned values first and then let them confirm to submit.
+- Build the executions history retrieval logic to be called on app load, so that the user knows what step they are currently on and what steps they have completed. You can reference the <execution_history> section for this.
+
+The Trail APIs are as follows:
+- Evaluations to get the transaction calldata for a given step
+  - Endpoint: POST https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/steps/:stepNumber/evaluations
+  - Description: build your app to get the required user inputs for a given step, then pass into here to evaluate the user inputs and get the transaction calldata
+  - Request/response schema details: see <submitting_inputs_to_get_transaction_calldata>
+- Save the transaction hash after submission to an "execution" for a given step
+  - Endpoint: POST https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/executions
+  - Description: after a user wallet submits a transaction using the calldata, pass the step primary nodeId and the transaction hash here to save it on the execution. This also creates a new execution if one doesn't exist yet for the wallet address.
+  - Request/response schema details: see <mandatory_updating_executions_after_transaction>
+- Execution history for wallet
+  - Endpoint: GET https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/executions
+  - Description: to get all executions for a trail for a given wallet address
+  - Request/response schema details: see <execution_history>
+- Get an execution by id
+  - Endpoint: GET https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/executions/:executionId
+  - Description: to get a specific execution
+  - Request/response schema details: see <execution_history>
+
+Do not constantly spam any of these APIs - avoid high frequency polling and useEffect calls when you can.
+
+To see a minimal app UI (think of it as a sandbox) built on top of this trail, you can use this link: https://herd.eco/trails/0197604c-f761-7ade-8a5c-5e50c2d834d4/overlook.
+
+Add these to your code first:
+- Paste this link into your code an a comment that tells you to reference this document again for any trail details and debugging help: https://trails-api.herd.eco/v1/trails/0197604c-f761-7ade-8a5c-5e50c2d834d4/versions/0197604c-f76a-779a-8f2e-e3ba236da2c6/llms-full.txt
+- If you are building an app, please add a small sticky footer to the bottom of the page that says "<a href="the overlook link" target="_blank">Powered by Herd</a>".
+
+This trail is for the "base" blockchain (EVM). The time is currently 2025-06-24T02:49:18.027Z. If you have any questions or problems, you can dm @andrewhong5297 on twitter or telegram, @ilemi on farcaster, or andrew@herd.eco on email.
+
+<trail_metadata>
+This is a description of the trail metadata object:
+
+```json
+{
+  "trailId": "uuid for the trail",
+  "versionId": "uuid for the version",
+  "trailName": "name of the trail",
+  "trailDescription": "description of the trail",
+  "trailCreator": {
+    "farcasterHandle": "farcaster handle of the creator, you can access their social profile at 'https://farcaster.xyz/:farcasterHandle'",
+    "displayName": "farcaster display name",
+    "followerCount": "number of followers on farcaster",
+    "followingCount": "number of following on farcaster"
+  },
+  "trailLastUpdatedAt": "timestamp of the last update to the trail"
+}
+```
+
+Here is the metadata for this trail:
+
+{
+  "trailId": "0197604c-f761-7ade-8a5c-5e50c2d834d4",
+  "versionId": "0197604c-f76a-779a-8f2e-e3ba236da2c6",
+  "trailName": "Buy me a coffee!",
+  "trailDescription": "Support my data work with some usdc :)",
+  "trailCreator": {
+    "farcasterHandle": "ilemi",
+    "displayName": "ilemi",
+    "followerCount": 11235,
+    "followingCount": 388
+  },
+  "trailLastUpdatedAt": "2025-06-23 03:44:15.046242+00"
+}
+</trail_metadata>
+
+<primary_steps>
+This is a description of the primary steps object:
+
+```json
+{
+  primarySteps: [
+  {
+    "stepNumber": "number of the step",
+    "primaryNodeId": "uuid for the primary node (all nodes has a uuid)",
+    "primaryNodeName": "name for the function/node, typically in the format of 'contractName.functionName' for contracts",
+    "primaryStepSummary": "summary of the functionality of the primary node",
+    "primaryCreatorGivenIntent": "intent given by the creator describing the purpose and details of the primary node"
+  }
+]
+}
+```
+
+Here are the primary steps for this trail:
+
+[
+  {
+    "stepNumber": 1,
+    "primaryNodeId": "0197604e-691f-7386-85a3-addc4346d6d0",
+    "primaryNodeName": "FiatTokenV2_2.transfer",
+    "primaryStepSummary": "The `FiatTokenV2_2` contract is an ERC20 token implementation that incorporates features for managing allowances, blacklisting, and minting. The `transfer` function in the contract facilitates the transfer of tokens from the caller to a specified address. It includes checks to ensure that the caller and recipient are not blacklisted and that the contract is not paused, before executing the transfer and emitting a `Transfer` event.\n\n\n\n Input Variables:\n- **`to`** (`address`): The address of the recipient who will receive the tokens.\n- **`value`** (`uint256`): The amount of tokens to be transferred.\n\n\n\n Output Variables:\n- **Returns** (`bool`): Returns `true` if the transfer operation is successful.",
+    "primaryCreatorGivenIntent": "thanks for buying me coffee!"
+  }
+]
+</primary_steps>
+</trail_overview>
+
+<all_primary_step_details>
+For each step of the trail, there is a main function being executed (the primary node) with a set of required inputs. You'll be able to find all this data in the <step_data> section below.
+If you want to learn more about a contract address on a node, you can use this explorerlink: https://herd.eco/base/contract/:contractAddress.
+
+<how_input_values_and_source_nodes_work>
+The 'value' for input values on the primary node each have a 'derive_method' that references another node. These other nodes can be found in the 'allSourceNodesForThisStep' from the API response. Data is built up as a user goes through steps, which is why there are sometimes source nodes from previous step numbers included.
+
+The 'derive_method' set on the input defines how the 'value' will be evaluated:
+- 'user_input' means the user will have to fill in the value
+- 'user_wallet' means this will take the connected user's wallet address
+- 'creator_hardcoded' means the creator of the trail has already filled in the value
+- 'relational' means the value is derived from other contract nodes (read functions, events, past write functions)
+- 'code' means the value is derived from a typescript code execution
+
+If relational or code, you can find the node that the value is derived from in the 'derivedFromNodeId' field on the input.
+
+Key information to keep mind about the inputs:
+- Values for inputs that aren't 'user_input' can't be changed (including any existing array elements added by the creator, those can't be removed).
+- Every 'inputName' is a flattened dot '.' path (like a JSON path) representation of the input arguments. This flattened representation must be kept when you send the user values to the evaluate API.
+- Any int type will have another '{variable}_decimals' value is used to multiply against the submitted value of the int variable because the EVM expects a raw bigint. This allows the user to actually pass decimal values into the app.
+</how_input_values_and_source_nodes_work>
+
+<submitting_inputs_to_get_transaction_calldata>
+The required 'user_input' fields in this step can be found in the 'requiredUserInputs' on each node id in 'allRequiredInputsForThisStep' in the <step_data>. This is a filtered list of only the 'user_input' fields found across all the primary/source nodes, you can refer the 'primaryNode' and 'allSourceNodesForThisStep' for more context about the node and all its inputs.
+
+You MUST send back all the 'requiredUserInputs' with a filled in 'value' fields and the user's wallet address to the evaluate API (https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/steps/:stepNumber/evaluations) using the following JSON format:
+
+```json
+{
+  "walletAddress": "0x...", //42 character hex ethereum address
+  "userInputs": {
+    "nodeId": {
+      "inputName": {
+        "value": "someValue" //value should always be wrapped in quotes, even if it's a number or array or boolean.
+      },
+      "someOtherInputName": {
+        "value": "someOtherValue"
+      }
+    },
+    "someOtherNodeId": {
+      ...
+    }
+  }
+}
+```
+
+<working_with_array_inputs>
+Note that array element "inputNames" are flattened with the index, i.e. 'inputs.someArray.{index}' for each new element. And if it's a tuple array then its 'inputs.someTupleArray.{index}.{eachTupleComponent}'. The easiest way to create new elements is by copying from arrayDefaults.
+Array defaults are meant to represent the default values for each newly added element, so they don't include the index in the dot path yet.
+
+So within 'requiredUserInputs' you may see a type like 'inputs.someArray' that comes with arrayDefaults. If a user added two elements to this array then it would be added to 'userInputs' as:
+
+```json
+userInputs": {
+    "nodeId": {
+      "inputs.someArray": {
+          "value": "" //the actual valueType = 'array' value should be always left as a blank string
+      },
+      "inputs.someArray.0": {
+        "value": "someValue"
+      },
+      "inputs.someArray.1": {
+        "value": "someOtherValue"
+      }
+      //if this value type has "int" in it, then the arrayDefaults will also contain a "inputs.someArray_decimals" value which would show up like this:
+      "inputs.someArray.0_decimals": {
+        "value": "someDecimalValue"
+      },
+      "inputs.someArray.1_decimals": {
+        "value": "someOtherDecimalValue"
+      }
+    }
+}
+```
+
+And if the array type is a 'tuple[]' then this will look like:
+
+```json
+userInputs": {
+    "nodeId": {
+      "inputs.someTupleArray": {
+          "value": "" //the actual valueType = 'array' value should be always left as a blank string
+      },
+      //you would find this in arrayDefaults already as 'inputs.someTupleArray.componentA' and 'inputs.someTupleArray.componentB', and it may already have a value you can copy over.
+      "inputs.someTupleArray.0.componentA": {
+        "value": "someValue"
+      },
+      "inputs.someTupleArray.0.componentB": {
+        "value": "someOtherValue"
+      },
+      "inputs.someTupleArray.1.componentA": {
+        "value": "someValue"
+      },
+      "inputs.someTupleArray.1.componentB": {
+        "value": "someOtherValue"
+      }
+  }
+}
+```
+
+You only need to copy "user_input" fields from arrayDefaults, you don't need to copy any of the other fields when gathering the required user inputs. Sometimes the array/arrayDefaults intent may also say that you should not add any array elements, in which case you don't even need to surface this array input to the user.
+</working_with_array_inputs>
+
+The evaluate API will return the transaction calldata to submit to the user wallet for signing (sending a transaction to the blockchain) in the following format:
+
+```json
+{
+  //these are the final input values on the primary node (matches the nodeInputs, not the final function ABI inputs). If you render these values back to the user, be sure to account for decimals correctly (review the input intent and then the {inputName}_decimals value and intent)
+  "finalInputValues": {
+    "inputName": "someValue",
+    "someOtherInputName": "someOtherValue"
+  },
+  "finalPayableAmount": "someWeiValue", //native value sent in transaction
+  "finalContractAddress": "0x... address of the contract to call", //the "to" address of the transaction
+  "callData": "0x... calldata to submit to the user wallet for signing", //the "data" of the transaction
+  "allInputsValidAndFilled": true //this will be false if any of the required user inputs are invalid or missing
+}
+```
+
+</submitting_inputs_to_get_transaction_calldata>
+
+<setting_up_wallet_connection_and_transaction_submission>
+If you're building a web app, you'll usually need a connect wallet button. We like using the family connectkit library for this (https://family.co/docs/connectkit/getting-started) which uses wagmi/viem under the hood.
+
+If you're building a farcaster miniapp, you should use the @farcaster/frame-wagmi-connector library instead of connectkit: https://miniapps.farcaster.xyz/docs/guides/wallets. For miniapps, you'll also need to publish it as an additional step: https://miniapps.farcaster.xyz/docs/guides/publishing
+
+For submitting a transaction (with the finalContractAddress and callData from the evaluate API), you can create a transaction request object like this and send it with the provider/wallet
+
+```typescript
+  import { useAccount, useSendTransaction, useSwitchChain } from 'wagmi'
+  import { base } from "wagmi/chains";
+
+  ...in component code...
+  const { address, isConnected } = useAccount()
+  const { switchChain } = useSwitchChain();
+
+  //switch to the correct chain id for the trail
+  useEffect(() => {
+    switchChain({ chainId: base.id });
+  }, [switchChain, address]);
+
+  // You can use the useSendTransaction hook from wagmi (https://wagmi.sh/react/api/hooks/useSendTransaction).
+  const { sendTransaction, isPending, error: txError } = useSendTransaction({
+    mutation: {
+      onSuccess: async (hash: string) => {
+        console.log('Transaction successfully sent:', hash)
+        try {
+          // After confirming the transaction, send the transaction hash back to the executions API
+          await fetch(
+            `https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/executions`,
+            {
+              method: "POST",
+              body: JSON.stringify({ nodeId: primaryNodeId, transactionHash: hash, walletAddress: address!, executionType: "latest" }),
+            },
+          );
+        } catch (err) {
+          console.error('Failed to submit execution:', err)
+        }
+      },
+      onError: (error: Error) => {
+        console.error('Transaction failed:', error)
+      }
+    }
+  })
+
+  handleSubmit = async () => {
+    // get the call arguments from the evaluate API
+    const evaluation = await apiCallToGetEvaluationData()
+
+    // create transaction request
+    const transactionRequest: {
+      from: `0x${string}`,
+      to: `0x${string}`,
+      data: `0x${string}`,
+      value: bigint,
+    } = {
+      from: address as `0x${string}`,
+      to: evaluation.finalContractAddress as `0x${string}`,
+      data: evaluation.callData as `0x${string}`,
+      value: BigInt(evaluation.finalPayableAmount ?? "0"),
+    }
+
+    // send transaction onchain - success/error handling is done in the useSendTransaction callbacks
+    sendTransaction(transactionRequest)
+  }
+```
+
+If you are sending a transaction in a script (no frontend), you can just use viem (https://viem.sh/llms-full.txt). Here's a code example:
+
+```typescript
+import { createWalletClient, http, parseEther } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import { mainnet } from 'viem/chains'
+
+const client = createWalletClient({
+  chain: mainnet,
+  transport: http()
+})
+
+const account = privateKeyToAccount('0x...') //or mnemonicToAccount('seed phrase words')
+
+//get the call arguments from the evaluate API
+const evaluation = await apiCallToGetEvaluationData() //this is the evaluation data for the step/primary node
+
+//send the transaction onchain
+const hash = await client.sendTransaction({
+  account,
+  to: evaluation.finalContractAddress,
+  value: parseEther(evaluation.finalPayableAmount ?? '0'),
+  data: evaluation.callData,
+})
+
+//save the transaction hash to the executions API
+await fetch(
+  `https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/executions`,
+  {
+    method: "POST",
+    body: JSON.stringify({ nodeId: primaryNodeId, transactionHash: hash, walletAddress: account.address, executionType: "latest" }),
+  },
+);
+```
+</setting_up_wallet_connection_and_transaction_submission>
+
+
+<mandatory_updating_executions_after_transaction>
+This execution API lets you create and/or update an "execution" for a trail by wallet address. Executions keep track of transactions a wallet has made for each step (primary node) in a trail.
+
+After the user has submitted the transaction onchain in your app, you must call the executions post endpoint (https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/executions) with this POST body:
+
+```json
+{
+  nodeId: "the uuid of the primary node for this step",
+  transactionHash: "the hash of the transaction submitted by the user wallet",
+  walletAddress: "the wallet address of the user submitting the transaction",
+  executionType: "latest" | "new"
+}
+```
+
+Execution type can be either "latest" or "new", where submitting a transaction for a given nodeId will either:
+- add the transaction as a step to the "latest" execution if one exists
+- create a new "latest" execution if one doesn't exist, and add the transaction as a step to it
+- if submitting a transaction to a previous step in the latest execution, it will "fork" that execution to a new one while keeping all previous step transaction data.
+
+"latest" is the execution that has most recently been updated (or created), adding a new transaction to an execution counts as an update.
+</mandatory_updating_executions_after_transaction>
+
+<execution_history>
+To get all executions for a trail for a given wallet address, you can use the following APIs:
+- https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/executions (pass in the required query param "walletAddress", results are ordered by latest updated at.)
+- https://trails-api.herd.eco/v1/trails/:trailId/versions/:versionId/executions/:executionId (no query params)
+
+Here is an example of the execution response from the /:executionId endpoint:
+
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "walletAddress": "string",
+  "createdAt": "string",
+  "updatedAt": "string",
+  "steps": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "stepNumber": 1,
+      "stepType": "string",
+      "contractAddress": "string",
+      "functionSignature": "string",
+      "nodeId": "123e4567-e89b-12d3-a456-426614174000",
+      "txHash": "string",
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ]
+}
+```
+
+The /executions endpoint returns an array of executions formatted like this:
+```json
+{
+  "executions": [
+    ...same format as above but as objects in an array
+  ]
+}
+```
+
+Execution history is useful for figuring out the current step a user is on in the trail, and also for showing previous transactions. You can link to https://herd.eco/base/tx/:txHash for the viewer to view the transaction on our block explorer.
+
+All executions will have a stepNumber 0 to mark the trail was started, with a transaction hash of 0x0000000000000000000000000000000000000000000000000000000000000000. You should ignore this step when showing the user any details about their transactions. The actual trail steps start counting from 1. Executions will only be updated after you call it, you should not poll it for updates.
+</execution_history>
+
+<step_data>
+This is a description of the array of step data objects:
+
+```json
+[
+  {
+      "stepNumber": "number of the step",
+      //the primary node being executed, with details about the write function and all its inputs
+      "primaryNode": {
+          "nodeId": "uuid for the primary node (all nodes has a uuid)",
+          "nodeMetadata": {
+            "type": "object",
+            "properties": {
+            "nodeName": "name for the function/node, typically in the format of 'contractName.functionName' for contracts",
+            "description": "description of the functionality of the primary node",
+            "type": "string",
+            "intent": "intent given by the creator describing the purpose and details of the primary node",
+            "stepNumber": "number of the step this node belongs to",
+          },
+          "nodeInputs": [
+                "inputName": "the name of the input, for example 'inputs.someInputName'. This is a flattened dot '.' path representatio, similar to a JSON path. see <how_input_values_and_source_nodes_work> to understand how this path works.",
+                "value": "value of the input set by the creator fo the trail",
+                "valueType": "type of the input value, for example 'string', 'int', 'bool', 'address', 'int256[]', 'tuple'",
+                "type": "this categorizes the input in Herd trails. 'input' means a function input, 'address' means the contract address, 'transaction' means a transaction hash (events rely on a transaction hash from a previous step), 'payable' means the payable native value (typically ETH) sent with a transaction, 'default' means a default array value",
+                "intent": "creator description for how the input value is used or should be filled in",
+                "deriveMethod": "see <how_input_values_and_source_nodes_work> to understand the different derive_methods",
+                "derivedFromNodeId": "node id that the value is derived from, if this is a relational/code derive_method",
+                "arrayDefaults": "the field will exist if valueType is an array []. This is in the format of 'nodeInputs' again, but with only the default values for the array elements",
+            },
+          ],
+        },
+      },
+      //all source nodes referenced in various derive_methods from the primary node inputs, with details about the node function and all its inputs
+      "allSourceNodesForThisStep": [
+        {
+          "nodeId": "uuid for the primary node (all nodes has a uuid)",
+          "nodeMetadata": "same format as primaryNode 'nodeMetadata'",
+          "nodeInputs": "same format as primaryNode 'nodeInputs'",
+        }
+      ]
+      //this is a filtered list of only the 'user_input' fields found across all the primary/source nodes
+      "allRequiredInputsForThisStep": [
+        {
+          "nodeId": "uuid for the primary node (all nodes has a uuid)",
+          "nodeName": "name for the function/node, typically in the format of 'contractName.functionName' for contracts",
+          "requiredUserInputs": "same format as primaryNode "stepInputs", but as an array of all primary/source nodes with only the 'user_input' fields kept"
+        }
+      ]
+    },
+  }
+  , ...next step
+]
+```
+
+Here is the step data for all steps in this trail:
+
+[
+  {
+    "stepNumber": 1,
+    "primaryNode": {
+      "nodeId": "0197604e-691f-7386-85a3-addc4346d6d0",
+      "nodeMetadata": {
+        "nodeName": "FiatTokenV2_2.transfer",
+        "description": "The `FiatTokenV2_2` contract is an ERC20 token implementation that incorporates features for managing allowances, blacklisting, and minting. The `transfer` function in the contract facilitates the transfer of tokens from the caller to a specified address. It includes checks to ensure that the caller and recipient are not blacklisted and that the contract is not paused, before executing the transfer and emitting a `Transfer` event.\n\n\n\n Input Variables:\n- **`to`** (`address`): The address of the recipient who will receive the tokens.\n- **`value`** (`uint256`): The amount of tokens to be transferred.\n\n\n\n Output Variables:\n- **Returns** (`bool`): Returns `true` if the transfer operation is successful.",
+        "type": "write_function",
+        "intent": "thanks for buying me coffee!",
+        "stepNumber": 1
+      },
+      "nodeInputs": [
+        {
+          "inputName": "address",
+          "value": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+          "valueType": "address",
+          "type": "address",
+          "intent": "",
+          "deriveMethod": "creator_hardcoded"
+        },
+        {
+          "inputName": "inputs.to",
+          "value": "0x2Ae8c972fB2E6c00ddED8986E2dc672ED190DA06",
+          "valueType": "address",
+          "type": "input",
+          "intent": "",
+          "deriveMethod": "creator_hardcoded"
+        },
+        {
+          "inputName": "inputs.value_decimals",
+          "value": "6",
+          "valueType": "uint256",
+          "type": "input",
+          "intent": "",
+          "deriveMethod": "creator_hardcoded"
+        },
+        {
+          "inputName": "inputs.value",
+          "value": null,
+          "valueType": "uint256",
+          "type": "input",
+          "intent": "the amount of usdc to transfer",
+          "deriveMethod": "user_input"
+        }
+      ]
+    },
+    "allSourceNodesForThisStep": [],
+    "allRequiredInputsForThisStep": [
+      {
+        "nodeId": "0197604e-691f-7386-85a3-addc4346d6d0",
+        "nodeName": "FiatTokenV2_2.transfer",
+        "requiredUserInputs": [
+          {
+            "inputName": "inputs.value",
+            "value": null,
+            "valueType": "uint256",
+            "type": "input",
+            "intent": "the amount of usdc to transfer",
+            "deriveMethod": "user_input"
+          }
+        ]
+      }
+    ]
+  }
+]
+</step_data>
+</all_primary_step_details>
