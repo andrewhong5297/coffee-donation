@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+
+  /* Coffee theme colors */
+  --coffee-50: hsl(0, 0%, 98%);
+  --coffee-100: hsl(48, 38%, 88%);
+  --coffee-200: hsl(33, 50%, 69%);
+  --coffee-300: hsl(33, 53%, 56%);
+  --coffee-400: hsl(25, 61%, 45%);
+  --coffee-500: hsl(25, 76%, 31%);
+  --coffee-600: hsl(25, 71%, 20%);
+  --coffee-700: hsl(25, 64%, 13%);
+  --coffee-800: hsl(25, 65%, 8%);
+  --coffee-900: hsl(25, 71%, 5%);
+
+  /* Accent colors */
+  --accent-500: hsl(14, 100%, 60%);
+  --accent-600: hsl(14, 100%, 51%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .coffee-bg-50 { background-color: var(--coffee-50); }
+  .coffee-bg-100 { background-color: var(--coffee-100); }
+  .coffee-bg-200 { background-color: var(--coffee-200); }
+  .coffee-bg-300 { background-color: var(--coffee-300); }
+  .coffee-bg-400 { background-color: var(--coffee-400); }
+  .coffee-bg-500 { background-color: var(--coffee-500); }
+  .coffee-bg-600 { background-color: var(--coffee-600); }
+  .coffee-bg-700 { background-color: var(--coffee-700); }
+  .coffee-bg-800 { background-color: var(--coffee-800); }
+  .coffee-bg-900 { background-color: var(--coffee-900); }
+  
+  .coffee-text-50 { color: var(--coffee-50); }
+  .coffee-text-100 { color: var(--coffee-100); }
+  .coffee-text-200 { color: var(--coffee-200); }
+  .coffee-text-300 { color: var(--coffee-300); }
+  .coffee-text-400 { color: var(--coffee-400); }
+  .coffee-text-500 { color: var(--coffee-500); }
+  .coffee-text-600 { color: var(--coffee-600); }
+  .coffee-text-700 { color: var(--coffee-700); }
+  .coffee-text-800 { color: var(--coffee-800); }
+  .coffee-text-900 { color: var(--coffee-900); }
+
+  .accent-bg-500 { background-color: var(--accent-500); }
+  .accent-bg-600 { background-color: var(--accent-600); }
+  .accent-text-500 { color: var(--accent-500); }
+  .accent-text-600 { color: var(--accent-600); }
+}
