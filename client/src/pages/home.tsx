@@ -43,17 +43,7 @@ export default function Home() {
             </a>
             {' '}and I create valuable data insights for the community. Your support helps me continue this work!
           </p>
-          <div className="flex items-center justify-center space-x-8 text-sm coffee-text-500">
-            <div className="flex items-center space-x-2">
-              <Users className="w-4 h-4" />
-              <span>11,235</span>
-              <span>followers</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Network className="w-4 h-4" />
-              <span>Base Network</span>
-            </div>
-          </div>
+          
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
