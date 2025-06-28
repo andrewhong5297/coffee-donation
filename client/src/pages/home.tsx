@@ -2,7 +2,7 @@ import { WalletConnection } from '@/components/wallet-connection';
 import { DonationForm } from '@/components/donation-form';
 import { ExecutionHistory } from '@/components/execution-history';
 import { AllExecutions } from '@/components/all-executions';
-import { Card, CardContent } from '@/components/ui/card';
+
 import { Coffee } from 'lucide-react';
 
 export default function Home() {
@@ -53,27 +53,6 @@ export default function Home() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Creator Info Card */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 coffee-bg-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Coffee className="text-white w-8 h-8" />
-                  </div>
-                  <h4 className="font-semibold coffee-text-800 mb-2">ilemi</h4>
-                  <a 
-                    href="https://farcaster.xyz/ilemi" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="coffee-text-500 hover:coffee-text-600 text-sm"
-                  >
-                    @ilemi
-                  </a>
-                  <p className="text-sm coffee-text-600 mt-2">Data analyst & researcher</p>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Your Donations */}
             <ExecutionHistory />
 
