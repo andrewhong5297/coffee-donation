@@ -4,7 +4,7 @@ import { base } from 'wagmi/chains';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useEvaluateInputs, useCreateExecution } from '@/hooks/use-herd-trail';
@@ -15,7 +15,7 @@ const QUICK_AMOUNTS = [5, 10, 25, 50];
 
 export function DonationForm() {
   const [amount, setAmount] = useState('');
-  const [message, setMessage] = useState('');
+
   const [isProcessing, setIsProcessing] = useState(false);
   
   const { address, isConnected } = useAccount();
@@ -181,22 +181,6 @@ export function DonationForm() {
                 ${quickAmount}
               </Button>
             ))}
-          </div>
-
-          {/* Personal Message */}
-          <div>
-            <Label htmlFor="personalMessage" className="block text-sm font-medium coffee-text-700 mb-2">
-              Add a personal message (optional)
-            </Label>
-            <Textarea
-              id="personalMessage"
-              rows={3}
-              placeholder="Thanks for your amazing data work!"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              disabled={isProcessing}
-              className="resize-none"
-            />
           </div>
 
           {/* Donation Button */}
