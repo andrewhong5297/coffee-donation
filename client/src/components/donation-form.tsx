@@ -4,7 +4,6 @@ import { base } from 'wagmi/chains';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useEvaluateInputs, useCreateExecution } from '@/hooks/use-herd-trail';
@@ -15,23 +14,64 @@ const QUICK_AMOUNTS = [5, 10, 25, 50];
 
 export function DonationForm() {
   const [amount, setAmount] = useState('');
-
   const [isProcessing, setIsProcessing] = useState(false);
   
   const { address, isConnected } = useAccount();
+  const { switchChain } = useSwitchChain();
   const { toast } = useToast();
   
   const evaluateInputs = useEvaluateInputs();
   const createExecution = useCreateExecution();
-  const { sendTransaction, isPending: isTxPending } = useSendTransaction();
-  const { switchChain } = useSwitchChain();
 
   // Switch to Base network when wallet connects
   useEffect(() => {
-    if (address) {
+    if (address && isConnected) {
       switchChain({ chainId: base.id });
     }
-  }, [switchChain, address]);
+  }, [switchChain, address, isConnected]);
+
+  const { sendTransaction, isPending: isTxPending } = useSendTransaction({
+    mutation: {
+      onSuccess: async (hash: string) => {
+        console.log('Transaction successfully sent:', hash);
+        try {
+          // Submit execution to Herd API
+          await createExecution.mutateAsync({
+            nodeId: 'donation-node',
+            transactionHash: hash,
+            walletAddress: address!,
+            executionType: 'latest',
+          });
+
+          toast({
+            title: 'Donation successful! ☕',
+            description: `Thank you for donating $${amount} USDC!`,
+          });
+
+          // Reset form
+          setAmount('');
+        } catch (error) {
+          console.error('Failed to submit execution:', error);
+          toast({
+            title: 'Execution failed',
+            description: 'Transaction sent but failed to record execution.',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsProcessing(false);
+        }
+      },
+      onError: (error: Error) => {
+        console.error('Transaction failed:', error);
+        toast({
+          title: 'Transaction failed',
+          description: error.message || 'Failed to send donation transaction.',
+          variant: 'destructive',
+        });
+        setIsProcessing(false);
+      }
+    }
+  });
 
   const handleQuickAmount = (quickAmount: number) => {
     setAmount(quickAmount.toString());
@@ -105,13 +145,12 @@ export function DonationForm() {
       setAmount('');
 
     } catch (error) {
-      console.error('Donation failed:', error);
+      console.error('Donation preparation failed:', error);
       toast({
         title: 'Donation failed',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred.',
+        description: error instanceof Error ? error.message : 'Failed to prepare donation transaction.',
         variant: 'destructive',
       });
-    } finally {
       setIsProcessing(false);
     }
   };

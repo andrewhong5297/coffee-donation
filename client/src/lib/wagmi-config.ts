@@ -1,19 +1,25 @@
-import { http, createConfig } from 'wagmi';
+import { createConfig, http } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { injected } from 'wagmi/connectors';
+import { getDefaultConfig } from 'connectkit';
 
-// Simple configuration focusing on injected wallet connections
-export const wagmiConfig = createConfig({
-  chains: [base],
-  connectors: [
-    injected({
-      target: 'metaMask',
-    }),
-    injected({
-      target: 'injected',
-    }),
-  ],
-  transports: {
-    [base.id]: http(),
-  },
-});
+export const wagmiConfig = createConfig(
+  getDefaultConfig({
+    // Your dApp's chains
+    chains: [base],
+    transports: {
+      // RPC URL for each chain
+      [base.id]: http(),
+    },
+
+    // Required API Keys
+    walletConnectProjectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'placeholder-project-id',
+
+    // Required App Info
+    appName: "Buy Me a Coffee",
+
+    // Optional App Info
+    appDescription: "Support creators with USDC donations on Base network",
+    appUrl: "https://buymeacoffee.replit.app",
+    appIcon: "https://family.co/logo.png", // Using placeholder for now
+  }),
+);
