@@ -130,7 +130,9 @@ export function AllExecutions() {
                               rel="noopener noreferrer"
                               className="hover:coffee-text-600 transition-colors"
                             >
-                              {step.farcasterData.username}
+                              {step.farcasterData.username.length > 6 
+                                ? `${step.farcasterData.username.slice(0, 6)}...` 
+                                : step.farcasterData.username}
                             </a>
                           </>
                         )}
