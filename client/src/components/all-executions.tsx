@@ -67,9 +67,8 @@ export function AllExecutions() {
         </h4>
         
         {(() => {
-          // Get all actual donation steps across all wallets and executions, excluding connected wallet
+          // Get all actual donation steps across all wallets and executions
           const allDonationSteps = allWalletExecutions
-            .filter(([walletAddress]) => walletAddress.toLowerCase() !== address?.toLowerCase())
             .flatMap(([walletAddress, walletData]) => 
               walletData.executions.flatMap((execution) =>
                 (execution.steps || [])
