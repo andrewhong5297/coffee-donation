@@ -103,7 +103,6 @@ export function DonationForm() {
 
       // Reset form
       setAmount('');
-      setMessage('');
 
     } catch (error) {
       console.error('Donation failed:', error);
@@ -118,7 +117,7 @@ export function DonationForm() {
   };
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className="w-full max-w-2xl">
       <CardContent className="p-8">
         <div className="mb-6">
           <h3 className="text-2xl font-semibold coffee-text-800 mb-2 flex items-center">

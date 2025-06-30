@@ -59,7 +59,7 @@ export function AllExecutions() {
   const allWalletExecutions = data?.executions ? Object.entries(data.executions) : [];
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardContent className="p-6">
         <h4 className="font-semibold coffee-text-800 mb-4 flex items-center">
           <Coffee className="coffee-text-500 mr-2 w-4 h-4" />

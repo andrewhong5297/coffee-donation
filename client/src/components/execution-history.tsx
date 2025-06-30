@@ -56,18 +56,18 @@ export function ExecutionHistory() {
   const addressKey = normalizedAddress && data?.executions ? 
     Object.keys(data.executions).find(key => key.toLowerCase() === normalizedAddress) : null;
   
-  const userExecutions = addressKey && data?.executions?.[addressKey] 
-    ? data.executions[addressKey].executions 
+  const userExecutions = addressKey && data?.executions && (data.executions as any)[addressKey] 
+    ? (data.executions as any)[addressKey].executions 
     : [];
   
-  const userFarcasterData = addressKey && data?.executions?.[addressKey] 
-    ? data.executions[addressKey].farcasterData 
+  const userFarcasterData = addressKey && data?.executions && (data.executions as any)[addressKey] 
+    ? (data.executions as any)[addressKey].farcasterData 
     : null;
 
 
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardContent className="p-6">
         <h4 className="font-semibold coffee-text-800 mb-4 flex items-center">
           <Clock className="coffee-text-500 mr-2 w-4 h-4" />
@@ -76,8 +76,8 @@ export function ExecutionHistory() {
         
 {(() => {
           // Get all actual donation steps across user's executions
-          const allDonationSteps = userExecutions.flatMap((execution) => 
-            (execution.steps || []).filter(step => 
+          const allDonationSteps = userExecutions.flatMap((execution: any) => 
+            (execution.steps || []).filter((step: any) => 
               step.stepNumber > 0 && 
               step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000'
             )
@@ -98,8 +98,8 @@ export function ExecutionHistory() {
             )
           ) : (
             <div className="space-y-3">
-              {allDonationSteps.map((step) => (
-                <div key={step.id} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
+              {allDonationSteps.map((step: any) => (
+                <div key={`${step.id}-${step.txHash}`} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     {userFarcasterData?.pfp_url ? (
                       <img 
