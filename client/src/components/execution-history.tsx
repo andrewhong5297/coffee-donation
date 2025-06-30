@@ -114,13 +114,13 @@ export function ExecutionHistory() {
                     )}
                     <div>
                       <p className="text-sm font-medium coffee-text-800">
-                        USDC Donation
+                        Donation
                       </p>
                       <div className="flex items-center space-x-2 text-xs coffee-text-500">
                         <span>{formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}</span>
-                        <span>•</span>
-                        {userFarcasterData?.username ? (
+                        {userFarcasterData?.username && (
                           <>
+                            <span>•</span>
                             <a 
                               href={`https://farcaster.xyz/${userFarcasterData.username}`}
                               target="_blank"
@@ -129,25 +129,7 @@ export function ExecutionHistory() {
                             >
                               {userFarcasterData.username}
                             </a>
-                            <span>•</span>
-                            <a 
-                              href={`https://herd.eco/base/wallet/${address}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:coffee-text-600 transition-colors"
-                            >
-                              {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''}
-                            </a>
                           </>
-                        ) : (
-                          <a 
-                            href={`https://herd.eco/base/wallet/${address}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:coffee-text-600 transition-colors"
-                          >
-                            {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ''}
-                          </a>
                         )}
                       </div>
                     </div>
