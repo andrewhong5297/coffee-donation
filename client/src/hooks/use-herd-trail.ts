@@ -40,8 +40,9 @@ export function useTotalDonations() {
       // Get all executions to count successful donations
       const allExecutions = await HerdAPI.getAllExecutions();
       
-      // Count successful donation transactions
+      // Count successful donation transactions and fetch actual amounts
       let totalTransactions = 0;
+      let totalAmount = 0;
       const executionEntries = Object.entries(allExecutions.executions);
       
       for (const [walletAddress, walletData] of executionEntries) {
@@ -49,16 +50,39 @@ export function useTotalDonations() {
           for (const step of execution.steps) {
             if (step.stepNumber > 0 && step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
               totalTransactions++;
+              
+              try {
+                // Use read API to get the actual donation amount
+                const readRequest: ReadNodeRequest = {
+                  walletAddress: walletAddress,
+                  userInputs: {}, // No user inputs needed for read
+                  execution: { type: 'manual', executionId: execution.id }
+                };
+                
+                const readResponse = await HerdAPI.readNode(HerdAPI.getTrailConfig().primaryNodeId, readRequest);
+                
+                // Extract the donation amount from the read response
+                let donationAmount = 5; // Default fallback
+                
+                if (readResponse.inputs && readResponse.inputs.value && readResponse.inputs.value.value) {
+                  // Convert from USDC wei (6 decimals) to dollars
+                  donationAmount = parseFloat(readResponse.inputs.value.value) / 1000000;
+                }
+                
+                totalAmount += donationAmount;
+              } catch (error) {
+                console.error(`Failed to fetch donation amount for total: ${walletAddress}-${execution.id}`, error);
+                // Use fallback amount of $5 for failed requests
+                totalAmount += 5;
+              }
             }
           }
         }
       }
       
-      // For now, return count of transactions
-      // Later we can enhance this with read API to get actual amounts
       return {
         totalTransactions,
-        totalAmount: totalTransactions * 5 // Placeholder: assume $5 average donation
+        totalAmount
       };
     },
     refetchInterval: 30000, // Refresh every 30 seconds

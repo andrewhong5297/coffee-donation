@@ -92,6 +92,12 @@ The application follows a full-stack architecture with clear separation between 
 
 ## Changelog
 
+- July 4, 2025. Updated donation platform to use new Herd API structure with real donation amounts
+  - Implemented read API calls to fetch actual USDC donation amounts from blockchain
+  - Updated both Community Donations and Your Donations sections to display real amounts
+  - Replaced checkmark icons with colorful User icons for users without Farcaster profiles
+  - Added randomized background colors for avatar icons
+  - Fixed total donation amount in header to use actual amounts instead of placeholder data
 - June 24, 2025. Initial setup
 
 ## User Preferences
