@@ -20,6 +20,7 @@ export interface UserInputs {
 export interface EvaluationRequest {
   walletAddress: string;
   userInputs: UserInputs;
+  execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string };
 }
 
 export interface EvaluationResponse {
@@ -34,7 +35,7 @@ export interface ExecutionRequest {
   nodeId: string;
   transactionHash: string;
   walletAddress: string;
-  executionType: "latest" | "new";
+  execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string };
 }
 
 export interface ExecutionHistoryItem {
@@ -141,15 +142,9 @@ export class HerdAPI {
   }
 
   static buildUserInputs(amount: string): UserInputs {
-    // Based on the trail step data, the only required user input is 'inputs.value'
-    // The 'to' address and decimals are hardcoded by the trail creator
-    return {
-      [TRAIL_CONFIG.primaryNodeId]: {
-        'inputs.value': {
-          value: amount,
-        },
-      },
-    };
+    // According to the new trail documentation, there are no required user inputs
+    // The inputs.value is derived relationally, not from user input
+    return {};
   }
 
   static async getAllExecutions(): Promise<ExecutionHistoryResponse> {
@@ -176,5 +171,28 @@ export class HerdAPI {
 
   static getTrailConfig() {
     return TRAIL_CONFIG;
+  }
+
+  // Add method to read donation amounts from executed transactions
+  static async getExecutionNodeData(walletAddress: string, execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string } = { type: "latest" }): Promise<any> {
+    const readNodeUrl = `${TRAIL_CONFIG.baseApiUrl}/${TRAIL_CONFIG.trailId}/versions/${TRAIL_CONFIG.versionId}/nodes/${TRAIL_CONFIG.primaryNodeId}/read`;
+    
+    const response = await fetch(readNodeUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        walletAddress: walletAddress,
+        userInputs: {},
+        execution: execution
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to read node data: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 }
