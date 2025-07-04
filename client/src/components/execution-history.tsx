@@ -2,8 +2,24 @@ import { useExecutionHistory, useDonationAmounts } from '@/hooks/use-herd-trail'
 import { useAccount } from 'wagmi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, Check, Coffee, ExternalLink } from 'lucide-react';
+import { Clock, Check, Coffee, ExternalLink, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+
+// Generate random background color for avatars without Farcaster profiles
+const getRandomAvatarColor = (walletAddress: string) => {
+  const colors = [
+    'bg-red-100', 'bg-blue-100', 'bg-green-100', 'bg-yellow-100', 'bg-purple-100',
+    'bg-pink-100', 'bg-indigo-100', 'bg-orange-100', 'bg-teal-100', 'bg-cyan-100'
+  ];
+  const textColors = [
+    'text-red-600', 'text-blue-600', 'text-green-600', 'text-yellow-600', 'text-purple-600',
+    'text-pink-600', 'text-indigo-600', 'text-orange-600', 'text-teal-600', 'text-cyan-600'
+  ];
+  
+  // Use wallet address to consistently generate the same color for the same address
+  const index = parseInt(walletAddress.slice(-1), 16) % colors.length;
+  return { bgColor: colors[index], textColor: textColors[index] };
+};
 
 export function ExecutionHistory() {
   const { data, isLoading, error } = useExecutionHistory();
@@ -114,9 +130,14 @@ export function ExecutionHistory() {
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <Check className="text-green-600 w-4 h-4" />
-                      </div>
+                      (() => {
+                        const { bgColor, textColor } = getRandomAvatarColor(normalizedAddress || '');
+                        return (
+                          <div className={`w-8 h-8 ${bgColor} rounded-full flex items-center justify-center`}>
+                            <User className={`${textColor} w-4 h-4`} />
+                          </div>
+                        );
+                      })()
                     )}
                     <div>
                       <p className="text-sm font-medium coffee-text-800">
