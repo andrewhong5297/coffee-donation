@@ -1,4 +1,4 @@
-import { useExecutionHistory } from '@/hooks/use-herd-trail';
+import { useExecutionHistory, useDonationAmounts } from '@/hooks/use-herd-trail';
 import { useAccount } from 'wagmi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +8,7 @@ import { formatDistanceToNow } from 'date-fns';
 export function ExecutionHistory() {
   const { data, isLoading, error } = useExecutionHistory();
   const { address } = useAccount();
+  const { data: donationAmounts } = useDonationAmounts();
 
   if (isLoading) {
     return (
@@ -77,10 +78,15 @@ export function ExecutionHistory() {
 {(() => {
           // Get all actual donation steps across user's executions
           const allDonationSteps = userExecutions.flatMap((execution: any) => 
-            (execution.steps || []).filter((step: any) => 
-              step.stepNumber > 0 && 
-              step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000'
-            )
+            (execution.steps || [])
+              .filter((step: any) => 
+                step.stepNumber > 0 && 
+                step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000'
+              )
+              .map((step: any) => ({
+                ...step,
+                executionId: execution.id
+              }))
           );
 
           return allDonationSteps.length === 0 ? (
@@ -114,7 +120,7 @@ export function ExecutionHistory() {
                     )}
                     <div>
                       <p className="text-sm font-medium coffee-text-800">
-                        Donation
+                        Donated ${donationAmounts?.[`${normalizedAddress}-${step.executionId}`]?.toFixed(2) || '5.00'}
                       </p>
                       <div className="flex items-center space-x-2 text-xs coffee-text-500">
                         <span>{formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}</span>

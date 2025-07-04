@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 import { HerdAPI } from '@/lib/herd-api';
+import { useDonationAmounts } from '@/hooks/use-herd-trail';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, Check, Coffee, ExternalLink } from 'lucide-react';
@@ -12,6 +13,8 @@ export function AllExecutions() {
     queryKey: ['all-executions'],
     queryFn: () => HerdAPI.getAllExecutions(),
   });
+
+  const { data: donationAmounts } = useDonationAmounts();
 
   if (isLoading) {
     return (
@@ -79,7 +82,8 @@ export function AllExecutions() {
                   .map(step => ({
                     ...step,
                     walletAddress,
-                    farcasterData: walletData.farcasterData
+                    farcasterData: walletData.farcasterData,
+                    executionId: execution.id
                   }))
               )
             );
@@ -116,7 +120,7 @@ export function AllExecutions() {
                     )}
                     <div>
                       <p className="text-sm font-medium coffee-text-800">
-                        Donation
+                        Donated ${donationAmounts?.[`${step.walletAddress}-${step.executionId}`]?.toFixed(2) || '5.00'}
                       </p>
                       <div className="flex items-center space-x-2 text-xs coffee-text-500">
                         <span>{formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}</span>
