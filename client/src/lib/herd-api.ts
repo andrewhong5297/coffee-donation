@@ -1,5 +1,5 @@
 // Reference this document for trail details and debugging: 
-// https://trails-api.herd.eco/v1/trails/0197604c-f761-7ade-8a5c-5e50c2d834d4/versions/0197604c-f76a-779a-8f2e-e3ba236da2c6/llms-full.txt
+// https://trails-api.herd.eco/v1/trails/0197604c-f761-7ade-8a5c-5e50c2d834d4/versions/0197604c-f76a-779a-8f2e-e3ba236da2c6/guidebook.txt
 
 const TRAIL_CONFIG = {
   trailId: '0197604c-f761-7ade-8a5c-5e50c2d834d4',
@@ -20,6 +20,7 @@ export interface UserInputs {
 export interface EvaluationRequest {
   walletAddress: string;
   userInputs: UserInputs;
+  execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string };
 }
 
 export interface EvaluationResponse {
@@ -27,14 +28,13 @@ export interface EvaluationResponse {
   finalPayableAmount: string;
   finalContractAddress: string;
   callData: string;
-  allInputsValidAndFilled: boolean;
 }
 
 export interface ExecutionRequest {
   nodeId: string;
   transactionHash: string;
   walletAddress: string;
-  executionType: "latest" | "new";
+  execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string };
 }
 
 export interface ExecutionHistoryItem {
@@ -57,7 +57,7 @@ export interface ExecutionHistoryItem {
 
 export interface ExecutionHistoryResponse {
   totals: {
-    executions: number;
+    transactions: number;
     wallets: number;
   };
   executions: {
@@ -76,6 +76,16 @@ export interface ExecutionHistoryResponse {
   };
 }
 
+export interface ReadNodeRequest {
+  walletAddress: string;
+  userInputs: UserInputs;
+  execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string };
+}
+
+export interface ReadNodeResponse {
+  outputs: any;
+}
+
 export class HerdAPI {
   private static getEvaluationUrl(): string {
     return `${TRAIL_CONFIG.baseApiUrl}/${TRAIL_CONFIG.trailId}/versions/${TRAIL_CONFIG.versionId}/steps/${TRAIL_CONFIG.stepNumber}/evaluations`;
@@ -83,6 +93,10 @@ export class HerdAPI {
 
   private static getExecutionUrl(): string {
     return `${TRAIL_CONFIG.baseApiUrl}/${TRAIL_CONFIG.trailId}/versions/${TRAIL_CONFIG.versionId}/executions`;
+  }
+
+  private static getReadNodeUrl(nodeId: string): string {
+    return `${TRAIL_CONFIG.baseApiUrl}/${TRAIL_CONFIG.trailId}/versions/${TRAIL_CONFIG.versionId}/nodes/${nodeId}/read`;
   }
 
   static async evaluateInputs(request: EvaluationRequest): Promise<EvaluationResponse> {
@@ -131,7 +145,7 @@ export class HerdAPI {
 
     if (!response.ok) {
       if (response.status === 404) {
-        return { totals: { executions: 0, wallets: 0 }, executions: {} };
+        return { totals: { transactions: 0, wallets: 0 }, executions: {} };
       }
       const errorText = await response.text();
       throw new Error(`Failed to fetch execution history: ${response.status} ${errorText}`);
@@ -165,10 +179,27 @@ export class HerdAPI {
 
     if (!response.ok) {
       if (response.status === 404) {
-        return { totals: { executions: 0, wallets: 0 }, executions: {} };
+        return { totals: { transactions: 0, wallets: 0 }, executions: {} };
       }
       const errorText = await response.text();
       throw new Error(`Failed to fetch all executions: ${response.status} ${errorText}`);
+    }
+
+    return response.json();
+  }
+
+  static async readNode(nodeId: string, request: ReadNodeRequest): Promise<ReadNodeResponse> {
+    const response = await fetch(this.getReadNodeUrl(nodeId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Read node API failed: ${response.status} ${errorText}`);
     }
 
     return response.json();

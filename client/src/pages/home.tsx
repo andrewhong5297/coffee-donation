@@ -2,10 +2,13 @@ import { WalletConnection } from '@/components/wallet-connection';
 import { DonationForm } from '@/components/donation-form';
 import { ExecutionHistory } from '@/components/execution-history';
 import { AllExecutions } from '@/components/all-executions';
+import { useTotalDonations } from '@/hooks/use-herd-trail';
 
 import { Coffee } from 'lucide-react';
 
 export default function Home() {
+  const { data: totalDonations, isLoading: isDonationsLoading } = useTotalDonations();
+
   return (
     <div className="coffee-bg-50 min-h-screen font-sans">
       {/* Header */}
@@ -14,7 +17,14 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Coffee className="coffee-text-500 w-8 h-8" />
-              <h1 className="text-xl font-semibold coffee-text-800">Buy me a coffee!</h1>
+              <div>
+                <h1 className="text-xl font-semibold coffee-text-800">Buy me a coffee!</h1>
+                <p className="text-sm coffee-text-600">
+                  {isDonationsLoading ? 'Loading...' : 
+                    totalDonations ? `Donated $${totalDonations.totalAmount.toFixed(2)}` : 'Donated $0.00'
+                  }
+                </p>
+              </div>
             </div>
             <WalletConnection />
           </div>

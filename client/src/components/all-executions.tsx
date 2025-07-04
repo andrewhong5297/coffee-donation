@@ -101,7 +101,7 @@ export function AllExecutions() {
           ) : (
             <div className="space-y-3">
               {recentSteps.map((step, index) => (
-                <div key={`${step.id}-${index}`} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
+                <div key={`${step.txHash}-${step.walletAddress}-${index}`} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     {step.farcasterData?.pfp_url ? (
                       <img 

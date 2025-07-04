@@ -98,8 +98,8 @@ export function ExecutionHistory() {
             )
           ) : (
             <div className="space-y-3">
-              {allDonationSteps.map((step: any) => (
-                <div key={`${step.id}-${step.txHash}`} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
+              {allDonationSteps.map((step: any, index: number) => (
+                <div key={`${step.txHash}-${index}`} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     {userFarcasterData?.pfp_url ? (
                       <img 

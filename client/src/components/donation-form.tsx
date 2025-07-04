@@ -37,10 +37,10 @@ export function DonationForm() {
         try {
           // Submit execution to Herd API
           await createExecution.mutateAsync({
-            nodeId: 'donation-node',
+            nodeId: HerdAPI.getTrailConfig().primaryNodeId,
             transactionHash: hash,
             walletAddress: address!,
-            executionType: 'latest',
+            execution: { type: 'latest' },
           });
 
           toast({
@@ -107,11 +107,8 @@ export function DonationForm() {
       const evaluationResponse = await evaluateInputs.mutateAsync({
         walletAddress: address,
         userInputs,
+        execution: { type: 'latest' },
       });
-
-      if (!evaluationResponse.allInputsValidAndFilled) {
-        throw new Error('Invalid inputs provided to the trail');
-      }
 
       // Step 2: Submit transaction using the calldata
       const txHash = await new Promise<string>((resolve, reject) => {
@@ -133,7 +130,7 @@ export function DonationForm() {
         nodeId: HerdAPI.getTrailConfig().primaryNodeId,
         transactionHash: txHash,
         walletAddress: address,
-        executionType: 'latest',
+        execution: { type: 'latest' },
       });
 
       toast({
