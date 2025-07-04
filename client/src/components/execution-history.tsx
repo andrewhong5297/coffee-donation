@@ -114,7 +114,7 @@ export function ExecutionHistory() {
                     )}
                     <div>
                       <p className="text-sm font-medium coffee-text-800">
-                        Donated $5.00
+                        Donation
                       </p>
                       <div className="flex items-center space-x-2 text-xs coffee-text-500">
                         <span>{formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}</span>

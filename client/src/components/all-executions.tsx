@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAccount } from 'wagmi';
 import { HerdAPI } from '@/lib/herd-api';
-import { useDonationAmounts } from '@/hooks/use-donation-amounts';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Clock, Check, Coffee, ExternalLink } from 'lucide-react';
@@ -93,9 +92,6 @@ export function AllExecutions() {
           // Take only the most recent 10 donations
           const recentSteps = sortedSteps.slice(0, 10);
 
-          // For now, we'll show a fixed amount since this is a simple USDC transfer trail
-          // The actual amount would need to be fetched from the read API for each execution
-
           return recentSteps.length === 0 ? (
             <div className="text-center py-8 coffee-text-500">
               <Coffee className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -120,7 +116,7 @@ export function AllExecutions() {
                     )}
                     <div>
                       <p className="text-sm font-medium coffee-text-800">
-                        Donated $5.00
+                        Donation
                       </p>
                       <div className="flex items-center space-x-2 text-xs coffee-text-500">
                         <span>{formatDistanceToNow(new Date(step.createdAt), { addSuffix: true })}</span>
