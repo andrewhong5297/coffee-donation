@@ -83,7 +83,8 @@ export interface ReadNodeRequest {
 }
 
 export interface ReadNodeResponse {
-  outputs: any;
+  inputs?: any;
+  outputs?: any;
 }
 
 export class HerdAPI {

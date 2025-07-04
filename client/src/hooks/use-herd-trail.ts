@@ -81,31 +81,39 @@ export function useDonationAmounts() {
             if (step.stepNumber > 0 && step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
               try {
                 // Use read API to get the transaction details
+                // Based on the documentation, for write_function nodes we need to provide the execution context
                 const readRequest: ReadNodeRequest = {
                   walletAddress: walletAddress,
-                  userInputs: {}, // No user inputs needed for read
+                  userInputs: {}, // No user inputs needed for read according to step data
                   execution: { type: 'manual', executionId: execution.id }
                 };
                 
                 const readResponse = await HerdAPI.readNode(HerdAPI.getTrailConfig().primaryNodeId, readRequest);
                 
+                console.log(`Read API response for ${walletAddress}-${execution.id}:`, readResponse);
+                
                 // Extract the donation amount from the read response
-                // The response format should have the inputs in nested format
+                // For write_function node type, response format is: { inputs: nested_json, outputs: nested_json }
                 let donationAmount = 5; // Default fallback
                 
-                if (readResponse.outputs) {
-                  // Try to extract amount from different possible response formats
-                  if (readResponse.outputs['inputs.value']) {
-                    donationAmount = parseFloat(readResponse.outputs['inputs.value']) || 5;
-                  } else if (readResponse.outputs.inputs && readResponse.outputs.inputs['value']) {
-                    donationAmount = parseFloat(readResponse.outputs.inputs['value']) || 5;
+                if (readResponse.inputs) {
+                  console.log('Inputs structure:', readResponse.inputs);
+                  
+                  // The API returns the exact format we need: inputs.value.value contains the USDC amount
+                  if (readResponse.inputs.value && readResponse.inputs.value.value) {
+                    // Convert from USDC wei (6 decimals) to dollars
+                    donationAmount = parseFloat(readResponse.inputs.value.value) / 1000000;
+                    console.log('Found donation amount:', donationAmount, 'USDC');
+                  } else {
+                    console.log('Value field not found in expected location');
                   }
                 }
                 
                 // Store amount with key as walletAddress-executionId for lookup
-                donationAmounts[`${walletAddress}-${execution.id}`] = donationAmount;
+                donationAmounts[`${walletAddress}-${execution.id}`] = Math.max(donationAmount, 0.01); // Minimum 1 cent
               } catch (error) {
                 console.error(`Failed to fetch donation amount for ${walletAddress}-${execution.id}:`, error);
+                console.error('Error details:', error);
                 // Use fallback amount
                 donationAmounts[`${walletAddress}-${execution.id}`] = 5;
               }
