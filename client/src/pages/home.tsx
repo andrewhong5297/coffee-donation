@@ -21,7 +21,7 @@ export default function Home() {
                 <h1 className="text-xl font-semibold coffee-text-800">Buy me a coffee!</h1>
                 <p className="text-sm coffee-text-600">
                   {isDonationsLoading ? 'Loading...' : 
-                    totalDonations ? `Donated $${totalDonations.totalAmount.toFixed(2)}` : 'Donated $0.00'
+                    totalDonations ? `Total Donated $${totalDonations.totalAmount.toFixed(2)}` : 'Total Donated $0.00'
                   }
                 </p>
               </div>
