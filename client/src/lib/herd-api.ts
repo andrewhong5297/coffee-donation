@@ -1,11 +1,11 @@
-// Reference this document for trail details and debugging: 
+// Reference this document for trail details and debugging:
 // https://trails-api.herd.eco/v1/trails/0197604c-f761-7ade-8a5c-5e50c2d834d4/versions/0197604c-f76a-779a-8f2e-e3ba236da2c6/guidebook.txt
 
 const TRAIL_CONFIG = {
-  trailId: '0197604c-f761-7ade-8a5c-5e50c2d834d4',
-  versionId: '0197604c-f76a-779a-8f2e-e3ba236da2c6',
-  baseApiUrl: 'https://trails-api.herd.eco/v1/trails',
-  primaryNodeId: '0197604e-691f-7386-85a3-addc4346d6d0', // FiatTokenV2_2.transfer
+  trailId: "0197604c-f761-7ade-8a5c-5e50c2d834d4",
+  versionId: "0197604c-f76a-779a-8f2e-e3ba236da2c6",
+  baseApiUrl: "https://trails-api.herd.eco/v1/trails",
+  primaryNodeId: "0197604e-691f-7386-85a3-addc4346d6d0", // FiatTokenV2_2.transfer
   stepNumber: 1,
 };
 
@@ -20,13 +20,16 @@ export interface UserInputs {
 export interface EvaluationRequest {
   walletAddress: string;
   userInputs: UserInputs;
-  execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string };
+  execution:
+    | { type: "latest" }
+    | { type: "new" }
+    | { type: "manual"; executionId: string };
 }
 
 export interface EvaluationResponse {
   finalInputValues: Record<string, string>;
-  finalPayableAmount: string;
-  finalContractAddress: string;
+  payableAmount: string;
+  contractAddress: string;
   callData: string;
 }
 
@@ -34,7 +37,10 @@ export interface ExecutionRequest {
   nodeId: string;
   transactionHash: string;
   walletAddress: string;
-  execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string };
+  execution:
+    | { type: "latest" }
+    | { type: "new" }
+    | { type: "manual"; executionId: string };
 }
 
 export interface ExecutionHistoryItem {
@@ -79,7 +85,10 @@ export interface ExecutionHistoryResponse {
 export interface ReadNodeRequest {
   walletAddress: string;
   userInputs: UserInputs;
-  execution: { type: "latest" } | { type: "new" } | { type: "manual", executionId: string };
+  execution:
+    | { type: "latest" }
+    | { type: "new" }
+    | { type: "manual"; executionId: string };
 }
 
 export interface ReadNodeResponse {
@@ -100,11 +109,13 @@ export class HerdAPI {
     return `${TRAIL_CONFIG.baseApiUrl}/${TRAIL_CONFIG.trailId}/versions/${TRAIL_CONFIG.versionId}/nodes/${nodeId}/read`;
   }
 
-  static async evaluateInputs(request: EvaluationRequest): Promise<EvaluationResponse> {
+  static async evaluateInputs(
+    request: EvaluationRequest,
+  ): Promise<EvaluationResponse> {
     const response = await fetch(this.getEvaluationUrl(), {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(request),
     });
@@ -119,28 +130,32 @@ export class HerdAPI {
 
   static async createExecution(request: ExecutionRequest): Promise<void> {
     const response = await fetch(this.getExecutionUrl(), {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(request),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.warn(`Failed to create execution: ${response.status} ${errorText}`);
+      console.warn(
+        `Failed to create execution: ${response.status} ${errorText}`,
+      );
       // Don't throw error here as transaction was already submitted
     }
   }
 
-  static async getExecutionHistory(walletAddress: string): Promise<ExecutionHistoryResponse> {
+  static async getExecutionHistory(
+    walletAddress: string,
+  ): Promise<ExecutionHistoryResponse> {
     const response = await fetch(`${this.getExecutionUrl()}/query`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        walletAddresses: [walletAddress]
+        walletAddresses: [walletAddress],
       }),
     });
 
@@ -149,7 +164,9 @@ export class HerdAPI {
         return { totals: { transactions: 0, wallets: 0 }, executions: {} };
       }
       const errorText = await response.text();
-      throw new Error(`Failed to fetch execution history: ${response.status} ${errorText}`);
+      throw new Error(
+        `Failed to fetch execution history: ${response.status} ${errorText}`,
+      );
     }
 
     return response.json();
@@ -160,7 +177,7 @@ export class HerdAPI {
     // The 'to' address and decimals are hardcoded by the trail creator
     return {
       [TRAIL_CONFIG.primaryNodeId]: {
-        'inputs.value': {
+        "inputs.value": {
           value: amount,
         },
       },
@@ -169,12 +186,12 @@ export class HerdAPI {
 
   static async getAllExecutions(): Promise<ExecutionHistoryResponse> {
     const response = await fetch(`${this.getExecutionUrl()}/query`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        walletAddresses: [] // Empty array to get all executions
+        walletAddresses: [], // Empty array to get all executions
       }),
     });
 
@@ -183,17 +200,22 @@ export class HerdAPI {
         return { totals: { transactions: 0, wallets: 0 }, executions: {} };
       }
       const errorText = await response.text();
-      throw new Error(`Failed to fetch all executions: ${response.status} ${errorText}`);
+      throw new Error(
+        `Failed to fetch all executions: ${response.status} ${errorText}`,
+      );
     }
 
     return response.json();
   }
 
-  static async readNode(nodeId: string, request: ReadNodeRequest): Promise<ReadNodeResponse> {
+  static async readNode(
+    nodeId: string,
+    request: ReadNodeRequest,
+  ): Promise<ReadNodeResponse> {
     const response = await fetch(this.getReadNodeUrl(nodeId), {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(request),
     });
