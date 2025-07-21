@@ -1,8 +1,10 @@
 import { useExecutionHistory, useDonationAmounts } from '@/hooks/use-herd-trail';
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, Check, Coffee, ExternalLink, User } from 'lucide-react';
+import { Clock, Check, Coffee, ExternalLink, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 // Generate random background color for avatars without Farcaster profiles
@@ -25,6 +27,8 @@ export function ExecutionHistory() {
   const { data, isLoading, error } = useExecutionHistory();
   const { address } = useAccount();
   const { data: donationAmounts } = useDonationAmounts();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   if (isLoading) {
     return (
@@ -100,7 +104,19 @@ export function ExecutionHistory() {
               }))
           );
 
-          return allDonationSteps.length === 0 ? (
+          // Sort by creation date, most recent first
+          const sortedSteps = allDonationSteps.sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+
+          // Calculate pagination
+          const totalSteps = sortedSteps.length;
+          const totalPages = Math.ceil(totalSteps / itemsPerPage);
+          const startIndex = (currentPage - 1) * itemsPerPage;
+          const endIndex = startIndex + itemsPerPage;
+          const currentSteps = sortedSteps.slice(startIndex, endIndex);
+
+          return totalSteps === 0 ? (
             address ? (
               <div className="text-center py-8 coffee-text-500">
                 <Coffee className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -114,8 +130,9 @@ export function ExecutionHistory() {
               </div>
             )
           ) : (
-            <div className="space-y-3">
-              {allDonationSteps.map((step: any, index: number) => (
+            <>
+              <div className="space-y-3">
+                {currentSteps.map((step: any, index: number) => (
                 <div key={`${step.txHash}-${index}`} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     {userFarcasterData?.pfp_url ? (
@@ -165,8 +182,53 @@ export function ExecutionHistory() {
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t coffee-border-200">
+                  <div className="text-xs coffee-text-500">
+                    Showing {startIndex + 1}-{Math.min(endIndex, totalSteps)} of {totalSteps} donations
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 px-3"
+                    >
+                      <ChevronLeft className="w-3 h-3" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 px-3"
+                    >
+                      Next
+                      <ChevronRight className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           );
         })()}
       </CardContent>

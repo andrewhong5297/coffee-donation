@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { HerdAPI } from '@/lib/herd-api';
 import { useDonationAmounts } from '@/hooks/use-herd-trail';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, Check, Coffee, ExternalLink, User } from 'lucide-react';
+import { Clock, Check, Coffee, ExternalLink, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 // Generate random background color for avatars without Farcaster profiles
@@ -25,6 +27,9 @@ const getRandomAvatarColor = (walletAddress: string) => {
 
 export function AllExecutions() {
   const { address } = useAccount();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  
   const { data, isLoading, error } = useQuery({
     queryKey: ['all-executions'],
     queryFn: () => HerdAPI.getAllExecutions(),
@@ -109,18 +114,23 @@ export function AllExecutions() {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
 
-          // Take only the most recent 10 donations
-          const recentSteps = sortedSteps.slice(0, 10);
+          // Calculate pagination
+          const totalSteps = sortedSteps.length;
+          const totalPages = Math.ceil(totalSteps / itemsPerPage);
+          const startIndex = (currentPage - 1) * itemsPerPage;
+          const endIndex = startIndex + itemsPerPage;
+          const currentSteps = sortedSteps.slice(startIndex, endIndex);
 
-          return recentSteps.length === 0 ? (
+          return totalSteps === 0 ? (
             <div className="text-center py-8 coffee-text-500">
               <Coffee className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p className="text-sm">No community donations yet</p>
               <p className="text-xs">Community donations will appear here</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {recentSteps.map((step, index) => (
+            <>
+              <div className="space-y-3">
+                {currentSteps.map((step, index) => (
                 <div key={`${step.txHash}-${step.walletAddress}-${index}`} className="flex items-center justify-between p-3 coffee-bg-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     {step.farcasterData?.pfp_url ? (
@@ -172,8 +182,53 @@ export function AllExecutions() {
                     <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t coffee-border-200">
+                  <div className="text-xs coffee-text-500">
+                    Showing {startIndex + 1}-{Math.min(endIndex, totalSteps)} of {totalSteps} donations
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 px-3"
+                    >
+                      <ChevronLeft className="w-3 h-3" />
+                      Previous
+                    </Button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "ghost"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className="h-8 w-8 p-0"
+                        >
+                          {page}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 px-3"
+                    >
+                      Next
+                      <ChevronRight className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           );
         })()}
       </CardContent>
