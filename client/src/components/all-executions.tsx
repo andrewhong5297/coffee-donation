@@ -74,8 +74,8 @@ export function AllExecutions() {
     );
   }
 
-  // Extract all executions from all wallets
-  const allWalletExecutions = data?.executions ? Object.entries(data.executions) : [];
+  // Extract all executions from all wallets using new structure
+  const allWalletExecutions = data?.walletExecutions || [];
 
   return (
     <Card className="w-full">
@@ -88,8 +88,8 @@ export function AllExecutions() {
         {(() => {
           // Get all actual donation steps across all wallets and executions
           const allDonationSteps = allWalletExecutions
-            .flatMap(([walletAddress, walletData]) => 
-              walletData.executions.flatMap((execution) =>
+            .flatMap((walletExecution) => 
+              walletExecution.executions.flatMap((execution) =>
                 (execution.steps || [])
                   .filter(step => 
                     step.stepNumber > 0 && 
@@ -97,8 +97,8 @@ export function AllExecutions() {
                   )
                   .map(step => ({
                     ...step,
-                    walletAddress,
-                    farcasterData: walletData.farcasterData,
+                    walletAddress: walletExecution.walletAddress,
+                    farcasterData: walletExecution.farcasterData,
                     executionId: execution.id
                   }))
               )

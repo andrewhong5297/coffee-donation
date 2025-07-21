@@ -70,16 +70,11 @@ export function ExecutionHistory() {
 
   // Extract executions for the connected wallet - normalize address to lowercase
   const normalizedAddress = address?.toLowerCase();
-  const addressKey = normalizedAddress && data?.executions ? 
-    Object.keys(data.executions).find(key => key.toLowerCase() === normalizedAddress) : null;
+  const userWalletData = normalizedAddress && data?.walletExecutions ? 
+    data.walletExecutions.find(wallet => wallet.walletAddress.toLowerCase() === normalizedAddress) : null;
   
-  const userExecutions = addressKey && data?.executions && (data.executions as any)[addressKey] 
-    ? (data.executions as any)[addressKey].executions 
-    : [];
-  
-  const userFarcasterData = addressKey && data?.executions && (data.executions as any)[addressKey] 
-    ? (data.executions as any)[addressKey].farcasterData 
-    : null;
+  const userExecutions = userWalletData?.executions || [];
+  const userFarcasterData = userWalletData?.farcasterData || null;
 
 
 

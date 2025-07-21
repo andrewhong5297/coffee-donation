@@ -65,21 +65,47 @@ export interface ExecutionHistoryResponse {
   totals: {
     transactions: number;
     wallets: number;
-  };
-  executions: {
-    [walletAddress: string]: {
-      executions: ExecutionHistoryItem[];
-      farcasterData?: {
-        username: string;
-        pfp_url: string;
-        display_name: string;
-        fid: number;
-        bio: string;
-        followers: number;
-        following: number;
+    stepStats?: {
+      [stepNumber: string]: {
+        wallets: number;
+        walletAddresses: string[];
+        transactions: number;
+        transactionHashes: Array<{
+          walletAddress: string;
+          txHash: string;
+          blockTimestamp: number;
+          blockNumber: number;
+          latestExecutionId: string;
+          farcasterData?: {
+            username: string;
+            pfp_url: string;
+            display_name: string;
+            fid: number;
+            bio: string;
+          } | null;
+        }>;
       };
     };
   };
+  walletExecutions: Array<{
+    walletAddress: string;
+    executions: ExecutionHistoryItem[];
+    farcasterData?: {
+      username: string;
+      pfp_url: string;
+      display_name: string;
+      fid: number;
+      bio: string;
+    } | null;
+    txnsPerStep?: {
+      [stepNumber: string]: Array<{
+        txHash: string;
+        blockTimestamp: number;
+        blockNumber: number;
+        latestExecutionId: string;
+      }>;
+    };
+  }>;
 }
 
 export interface ReadNodeRequest {
@@ -161,7 +187,7 @@ export class HerdAPI {
 
     if (!response.ok) {
       if (response.status === 404) {
-        return { totals: { transactions: 0, wallets: 0 }, executions: {} };
+        return { totals: { transactions: 0, wallets: 0 }, walletExecutions: [] };
       }
       const errorText = await response.text();
       throw new Error(
@@ -197,7 +223,7 @@ export class HerdAPI {
 
     if (!response.ok) {
       if (response.status === 404) {
-        return { totals: { transactions: 0, wallets: 0 }, executions: {} };
+        return { totals: { transactions: 0, wallets: 0 }, walletExecutions: [] };
       }
       const errorText = await response.text();
       throw new Error(

@@ -7,7 +7,7 @@ export function useExecutionHistory() {
 
   return useQuery({
     queryKey: ['execution-history', address],
-    queryFn: () => address ? HerdAPI.getExecutionHistory(address) : Promise.resolve({ totals: { transactions: 0, wallets: 0 }, executions: {} }),
+    queryFn: () => address ? HerdAPI.getExecutionHistory(address) : Promise.resolve({ totals: { transactions: 0, wallets: 0 }, walletExecutions: [] }),
     enabled: !!address,
   });
 }
@@ -43,10 +43,9 @@ export function useTotalDonations() {
       // Count successful donation transactions and fetch actual amounts
       let totalTransactions = 0;
       let totalAmount = 0;
-      const executionEntries = Object.entries(allExecutions.executions);
       
-      for (const [walletAddress, walletData] of executionEntries) {
-        for (const execution of walletData.executions) {
+      for (const walletExecution of allExecutions.walletExecutions) {
+        for (const execution of walletExecution.executions) {
           for (const step of execution.steps) {
             if (step.stepNumber > 0 && step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
               totalTransactions++;
@@ -54,7 +53,7 @@ export function useTotalDonations() {
               try {
                 // Use read API to get the actual donation amount
                 const readRequest: ReadNodeRequest = {
-                  walletAddress: walletAddress,
+                  walletAddress: walletExecution.walletAddress,
                   userInputs: {}, // No user inputs needed for read
                   execution: { type: 'manual', executionId: execution.id }
                 };
@@ -71,7 +70,7 @@ export function useTotalDonations() {
                 
                 totalAmount += donationAmount;
               } catch (error) {
-                console.error(`Failed to fetch donation amount for total: ${walletAddress}-${execution.id}`, error);
+                console.error(`Failed to fetch donation amount for total: ${walletExecution.walletAddress}-${execution.id}`, error);
                 // Use fallback amount of $5 for failed requests
                 totalAmount += 5;
               }
@@ -97,24 +96,22 @@ export function useDonationAmounts() {
       const allExecutions = await HerdAPI.getAllExecutions();
       const donationAmounts: Record<string, number> = {};
       
-      const executionEntries = Object.entries(allExecutions.executions);
-      
-      for (const [walletAddress, walletData] of executionEntries) {
-        for (const execution of walletData.executions) {
+      for (const walletExecution of allExecutions.walletExecutions) {
+        for (const execution of walletExecution.executions) {
           for (const step of execution.steps) {
             if (step.stepNumber > 0 && step.txHash !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
               try {
                 // Use read API to get the transaction details
                 // Based on the documentation, for write_function nodes we need to provide the execution context
                 const readRequest: ReadNodeRequest = {
-                  walletAddress: walletAddress,
+                  walletAddress: walletExecution.walletAddress,
                   userInputs: {}, // No user inputs needed for read according to step data
                   execution: { type: 'manual', executionId: execution.id }
                 };
                 
                 const readResponse = await HerdAPI.readNode(HerdAPI.getTrailConfig().primaryNodeId, readRequest);
                 
-                console.log(`Read API response for ${walletAddress}-${execution.id}:`, readResponse);
+                console.log(`Read API response for ${walletExecution.walletAddress}-${execution.id}:`, readResponse);
                 
                 // Extract the donation amount from the read response
                 // For write_function node type, response format is: { inputs: nested_json, outputs: nested_json }
@@ -134,12 +131,12 @@ export function useDonationAmounts() {
                 }
                 
                 // Store amount with key as walletAddress-executionId for lookup
-                donationAmounts[`${walletAddress}-${execution.id}`] = Math.max(donationAmount, 0.01); // Minimum 1 cent
+                donationAmounts[`${walletExecution.walletAddress}-${execution.id}`] = Math.max(donationAmount, 0.01); // Minimum 1 cent
               } catch (error) {
-                console.error(`Failed to fetch donation amount for ${walletAddress}-${execution.id}:`, error);
+                console.error(`Failed to fetch donation amount for ${walletExecution.walletAddress}-${execution.id}:`, error);
                 console.error('Error details:', error);
                 // Use fallback amount
-                donationAmounts[`${walletAddress}-${execution.id}`] = 5;
+                donationAmounts[`${walletExecution.walletAddress}-${execution.id}`] = 5;
               }
             }
           }
