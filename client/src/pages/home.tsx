@@ -57,7 +57,7 @@ export default function Home() {
           
         </div>
 
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-8">
           {/* Donation Form */}
           <DonationForm />
 

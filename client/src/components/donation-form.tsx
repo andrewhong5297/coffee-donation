@@ -153,7 +153,7 @@ export function DonationForm() {
   };
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full">
       <CardContent className="p-8">
         <div className="mb-6">
           <h3 className="text-2xl font-semibold coffee-text-800 mb-2 flex items-center">
