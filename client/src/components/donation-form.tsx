@@ -203,7 +203,7 @@ export function DonationForm() {
           </div>
 
           {/* Quick Amount Buttons */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="flex flex-col gap-3">
             {QUICK_AMOUNTS.map((quickAmount) => (
               <Button
                 key={quickAmount}
