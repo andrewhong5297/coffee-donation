@@ -199,12 +199,16 @@ export class HerdAPI {
   }
 
   static buildUserInputs(amount: string): UserInputs {
-    // Based on the trail step data, the only required user input is 'inputs.value'
-    // The 'to' address and decimals are hardcoded by the trail creator
+    // Based on the trail step data, required user inputs are 'inputs.value' and 'inputs.to'
+    // The 'to' address is hardcoded to the same address that was previously creator_hardcoded
+    // but now needs to be passed as user input (not shown in UI)
     return {
       [TRAIL_CONFIG.primaryNodeId]: {
         "inputs.value": {
           value: amount,
+        },
+        "inputs.to": {
+          value: "0x2Ae8c972fB2E6c00ddED8986E2dc672ED190DA06",
         },
       },
     };
