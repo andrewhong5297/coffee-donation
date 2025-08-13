@@ -131,7 +131,11 @@ export function DonationForm() {
       // Step 1: Evaluate inputs to get transaction calldata
       console.log(`Starting donation process for amount: "${amount}" USDC (parsed: ${donationAmount})`);
       
-      const userInputs = HerdAPI.buildUserInputs(amount);
+      // Convert user-entered amount to wei format for the API
+      const amountInWei = (donationAmount * 1_000_000).toString();
+      console.log(`Converting ${amount} USDC to ${amountInWei} wei`);
+      
+      const userInputs = HerdAPI.buildUserInputs(amountInWei);
       console.log('Generated userInputs:', userInputs);
       
       const evaluationResponse = await evaluateInputs.mutateAsync({

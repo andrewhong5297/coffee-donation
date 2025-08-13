@@ -200,10 +200,8 @@ export class HerdAPI {
   }
 
   static buildUserInputs(amount: string): UserInputs {
-    // Convert amount to USDC in wei (multiply by 1,000,000 for 6 decimals)
-    const amountInWei = (parseFloat(amount) * 1_000_000).toString();
-    
-    console.log(`Converting donation amount: ${amount} USDC -> ${amountInWei} wei`);
+    // Amount is already in the correct format, no decimal conversion needed
+    console.log(`Using donation amount as-is: ${amount}`);
     
     // Based on the trail step data, required user inputs are 'inputs.value' and 'inputs.to'
     // The 'to' address is hardcoded to the same address that was previously creator_hardcoded
@@ -211,7 +209,7 @@ export class HerdAPI {
     return {
       [TRAIL_CONFIG.primaryNodeId]: {
         "inputs.value": {
-          value: amountInWei,
+          value: amount,
         },
         "inputs.to": {
           value: "0x2Ae8c972fB2E6c00ddED8986E2dc672ED190DA06",
