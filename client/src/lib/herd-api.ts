@@ -203,6 +203,8 @@ export class HerdAPI {
     // Convert amount to USDC in wei (multiply by 1,000,000 for 6 decimals)
     const amountInWei = (parseFloat(amount) * 1_000_000).toString();
     
+    console.log(`Converting donation amount: ${amount} USDC -> ${amountInWei} wei`);
+    
     // Based on the trail step data, required user inputs are 'inputs.value' and 'inputs.to'
     // The 'to' address is hardcoded to the same address that was previously creator_hardcoded
     // but now needs to be passed as user input (not shown in UI)

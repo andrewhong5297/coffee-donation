@@ -129,12 +129,18 @@ export function DonationForm() {
 
     try {
       // Step 1: Evaluate inputs to get transaction calldata
+      console.log(`Starting donation process for amount: "${amount}" USDC (parsed: ${donationAmount})`);
+      
       const userInputs = HerdAPI.buildUserInputs(amount);
+      console.log('Generated userInputs:', userInputs);
+      
       const evaluationResponse = await evaluateInputs.mutateAsync({
         walletAddress: address,
         userInputs,
         execution: { type: 'latest' },
       });
+      
+      console.log('Evaluation response:', evaluationResponse);
 
       // Step 2: Submit transaction using the calldata
       const txHash = await new Promise<string>((resolve, reject) => {
