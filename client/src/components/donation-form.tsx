@@ -1,43 +1,43 @@
-import { useState, useEffect } from 'react';
-import { useAccount, useSendTransaction, useSwitchChain } from 'wagmi';
-import { base } from 'wagmi/chains';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { useEvaluateInputs, useCreateExecution } from '@/hooks/use-herd-trail';
-import { useUserBalance } from '@/hooks/use-user-balance';
-import { HerdAPI } from '@/lib/herd-api';
-import { Coffee, Loader2, Heart } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useAccount, useSendTransaction, useSwitchChain } from "wagmi";
+import { base } from "wagmi/chains";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { useEvaluateInputs, useCreateExecution } from "@/hooks/use-herd-trail";
+import { useUserBalance } from "@/hooks/use-user-balance";
+import { HerdAPI } from "@/lib/herd-api";
+import { Coffee, Loader2, Heart } from "lucide-react";
 
 const QUICK_AMOUNTS = [5, 10, 25, 50];
 
 export function DonationForm() {
-  const [amount, setAmount] = useState('');
+  const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   const { address, status } = useAccount();
   const { switchChain } = useSwitchChain();
   const { toast } = useToast();
-  
+
   const evaluateInputs = useEvaluateInputs();
   const createExecution = useCreateExecution();
   const { data: userBalance, isLoading: isLoadingBalance } = useUserBalance();
 
   // Check if wallet is ready using proper Wagmi status check
-  const isWalletReady = status === 'connected' && !!address;
-  
+  const isWalletReady = status === "connected" || status === "connecting";
+
   // Log wallet states for debugging
-  console.log('Wallet states:', { 
+  console.log("Wallet states:", {
     status,
-    address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'none',
-    isWalletReady 
+    address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "none",
+    isWalletReady,
   });
 
   // Switch to Base network when wallet connects
   useEffect(() => {
-    if (address && status === 'connected') {
+    if (address && status === "connected") {
       switchChain({ chainId: base.id });
     }
   }, [switchChain, address, status]);
@@ -45,44 +45,44 @@ export function DonationForm() {
   const { sendTransaction, isPending: isTxPending } = useSendTransaction({
     mutation: {
       onSuccess: async (hash: string) => {
-        console.log('Transaction successfully sent:', hash);
+        console.log("Transaction successfully sent:", hash);
         try {
           // Submit execution to Herd API
           await createExecution.mutateAsync({
             nodeId: HerdAPI.getTrailConfig().primaryNodeId,
             transactionHash: hash,
             walletAddress: address!,
-            execution: { type: 'latest' },
+            execution: { type: "latest" },
           });
 
           toast({
-            title: 'Donation successful! ☕',
+            title: "Donation successful! ☕",
             description: `Thank you for donating $${amount} USDC!`,
           });
 
           // Reset form
-          setAmount('');
+          setAmount("");
         } catch (error) {
-          console.error('Failed to submit execution:', error);
+          console.error("Failed to submit execution:", error);
           toast({
-            title: 'Execution failed',
-            description: 'Transaction sent but failed to record execution.',
-            variant: 'destructive',
+            title: "Execution failed",
+            description: "Transaction sent but failed to record execution.",
+            variant: "destructive",
           });
         } finally {
           setIsProcessing(false);
         }
       },
       onError: (error: Error) => {
-        console.error('Transaction failed:', error);
+        console.error("Transaction failed:", error);
         toast({
-          title: 'Transaction failed',
-          description: error.message || 'Failed to send donation transaction.',
-          variant: 'destructive',
+          title: "Transaction failed",
+          description: error.message || "Failed to send donation transaction.",
+          variant: "destructive",
         });
         setIsProcessing(false);
-      }
-    }
+      },
+    },
   });
 
   const handleQuickAmount = (quickAmount: number) => {
@@ -91,14 +91,11 @@ export function DonationForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isWalletReady) {
       toast({
-        title: 'Wallet not ready',
-        description: status === 'connecting' || status === 'reconnecting'
-          ? 'Please wait for wallet to connect...' 
-          : 'Please connect your wallet to make a donation.',
-        variant: 'destructive',
+        title: "Wallet not ready",
+        variant: "destructive",
       });
       return;
     }
@@ -106,9 +103,9 @@ export function DonationForm() {
     const donationAmount = parseFloat(amount);
     if (!donationAmount || donationAmount < 0.01) {
       toast({
-        title: 'Invalid amount',
-        description: 'Please enter a valid donation amount (minimum $0.01).',
-        variant: 'destructive',
+        title: "Invalid amount",
+        description: "Please enter a valid donation amount (minimum $0.01).",
+        variant: "destructive",
       });
       return;
     }
@@ -116,9 +113,9 @@ export function DonationForm() {
     // Check if user has sufficient balance
     if (userBalance !== undefined && donationAmount > userBalance) {
       toast({
-        title: 'Insufficient balance',
+        title: "Insufficient balance",
         description: `You don't have enough USDC. Your balance: $${userBalance.toFixed(2)} USDC`,
-        variant: 'destructive',
+        variant: "destructive",
       });
       return;
     }
@@ -126,23 +123,16 @@ export function DonationForm() {
     setIsProcessing(true);
 
     try {
-      // Step 1: Evaluate inputs to get transaction calldata
-      console.log(`Starting donation process for amount: "${amount}" USDC (parsed: ${donationAmount})`);
-      
-      // Convert user-entered amount to wei format for the API
-      const amountInWei = (donationAmount * 1_000_000).toString();
-      console.log(`Converting ${amount} USDC to ${amountInWei} wei`);
-      
-      const userInputs = HerdAPI.buildUserInputs(amountInWei);
-      console.log('Generated userInputs:', userInputs);
-      
+      const userInputs = HerdAPI.buildUserInputs(amount);
+      console.log("Generated userInputs:", userInputs);
+
       const evaluationResponse = await evaluateInputs.mutateAsync({
-        walletAddress: address,
+        walletAddress: address!,
         userInputs,
-        execution: { type: 'latest' },
+        execution: { type: "latest" },
       });
-      
-      console.log('Evaluation response:', evaluationResponse);
+
+      console.log("Evaluation response:", evaluationResponse);
 
       // Step 2: Submit transaction using the calldata
       const txHash = await new Promise<string>((resolve, reject) => {
@@ -150,12 +140,12 @@ export function DonationForm() {
           {
             to: evaluationResponse.contractAddress as `0x${string}`,
             data: evaluationResponse.callData as `0x${string}`,
-            value: BigInt(evaluationResponse.payableAmount || '0'),
+            value: BigInt(evaluationResponse.payableAmount || "0"),
           },
           {
             onSuccess: (hash) => resolve(hash),
             onError: (error) => reject(error),
-          }
+          },
         );
       });
 
@@ -164,23 +154,25 @@ export function DonationForm() {
         nodeId: HerdAPI.getTrailConfig().primaryNodeId,
         transactionHash: txHash,
         walletAddress: address,
-        execution: { type: 'latest' },
+        execution: { type: "latest" },
       });
 
       toast({
-        title: 'Donation successful! ☕',
+        title: "Donation successful! ☕",
         description: `Thank you for donating $${amount} USDC!`,
       });
 
       // Reset form
-      setAmount('');
-
+      setAmount("");
     } catch (error) {
-      console.error('Donation preparation failed:', error);
+      console.error("Donation preparation failed:", error);
       toast({
-        title: 'Donation failed',
-        description: error instanceof Error ? error.message : 'Failed to prepare donation transaction.',
-        variant: 'destructive',
+        title: "Donation failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to prepare donation transaction.",
+        variant: "destructive",
       });
       setIsProcessing(false);
     }
@@ -204,9 +196,9 @@ export function DonationForm() {
             <span>Ready to donate</span>
           </div>
           <div className="w-full coffee-bg-100 rounded-full h-2">
-            <div 
-              className="coffee-bg-500 h-2 rounded-full transition-all duration-300" 
-              style={{ width: isProcessing ? '100%' : '0%' }}
+            <div
+              className="coffee-bg-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: isProcessing ? "100%" : "0%" }}
             />
           </div>
         </div>
@@ -214,7 +206,10 @@ export function DonationForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Amount Input */}
           <div>
-            <Label htmlFor="donationAmount" className="block text-sm font-medium coffee-text-700 mb-2">
+            <Label
+              htmlFor="donationAmount"
+              className="block text-sm font-medium coffee-text-700 mb-2"
+            >
               Donation Amount (USDC)
             </Label>
             <div className="relative">
@@ -265,10 +260,18 @@ export function DonationForm() {
           {/* Donation Button */}
           <Button
             type="submit"
-            disabled={!isWalletReady || isProcessing || !amount || evaluateInputs.isPending || createExecution.isPending}
+            disabled={
+              !isWalletReady ||
+              isProcessing ||
+              !amount ||
+              evaluateInputs.isPending ||
+              createExecution.isPending
+            }
             className="w-full accent-bg-500 hover:accent-bg-600 disabled:bg-gray-300 text-white py-4 px-6 rounded-lg font-semibold text-lg transition-colors duration-200"
           >
-            {isProcessing || evaluateInputs.isPending || createExecution.isPending ? (
+            {isProcessing ||
+            evaluateInputs.isPending ||
+            createExecution.isPending ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Processing donation...
