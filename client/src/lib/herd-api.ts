@@ -1,12 +1,12 @@
 // Reference this document for trail details and debugging:
-// https://trails-api.herd.eco/v1/trails/0197604c-f761-7ade-8a5c-5e50c2d834d4/versions/0197604c-f76a-779a-8f2e-e3ba236da2c6/guidebook.txt
+// https://trails-api.herd.eco/v1/trails/0197604c-f761-7ade-8a5c-5e50c2d834d4/versions/0197604c-f76a-779a-8f2e-e3ba236da2c6/guidebook.txt?trailAppId=0198a42e-6183-745a-abca-cb89fd695d50
 
 const TRAIL_CONFIG = {
   trailId: "0197604c-f761-7ade-8a5c-5e50c2d834d4",
   versionId: "0197604c-f76a-779a-8f2e-e3ba236da2c6",
   baseApiUrl: "https://trails-api.herd.eco/v1/trails",
   primaryNodeId: "0197604e-691f-7386-85a3-addc4346d6d0", // FiatTokenV2_2.transfer
-  balanceNodeId: "01976052-e67b-7b9c-a6c7-9bb8c4b8c3f7", // USDC balance read node
+  balanceNodeId: "01989ee5-c66c-7eb5-9728-faaa6ec696c9", // USDC balance read node
   stepNumber: 1,
   trailAppId: "0198a437-d9da-7232-8be9-570229bd756b",
 };
@@ -266,20 +266,25 @@ export class HerdAPI {
   static async getUserBalance(walletAddress: string): Promise<number> {
     try {
       const request: ReadNodeRequest = {
-        walletAddress,
+        walletAddress: walletAddress.toLowerCase(), // Ensure lowercase as per API example
         execution: { type: "latest" },
         userInputs: {}
       };
 
+      console.log(`Fetching balance for wallet: ${walletAddress}`);
       const response = await this.readNode(TRAIL_CONFIG.balanceNodeId, request);
+      console.log("Balance API response:", response);
       
       // Parse balance from the response
       if (response.outputs && response.outputs.arg_0) {
         const balanceWei = BigInt(response.outputs.arg_0.value);
         // Convert from wei to USDC (6 decimals)
-        return Number(balanceWei) / 1_000_000;
+        const balance = Number(balanceWei) / 1_000_000;
+        console.log(`Parsed balance: ${balance} USDC from raw value: ${response.outputs.arg_0.value}`);
+        return balance;
       }
       
+      console.log("No balance data found in response");
       return 0;
     } catch (error) {
       console.error("Failed to fetch user balance:", error);
