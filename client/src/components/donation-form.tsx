@@ -17,13 +17,25 @@ export function DonationForm() {
   const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
   const { switchChain } = useSwitchChain();
   const { toast } = useToast();
   
   const evaluateInputs = useEvaluateInputs();
   const createExecution = useCreateExecution();
   const { data: userBalance, isLoading: isLoadingBalance } = useUserBalance();
+
+  // Check if wallet is ready (connected and not in transition states)
+  const isWalletReady = isConnected && !isConnecting && !isReconnecting && !!address;
+  
+  // Log wallet states for debugging
+  console.log('Wallet states:', { 
+    isConnected, 
+    isConnecting, 
+    isReconnecting, 
+    address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'none',
+    isWalletReady 
+  });
 
   // Switch to Base network when wallet connects
   useEffect(() => {
@@ -82,10 +94,12 @@ export function DonationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isConnected || !address) {
+    if (!isWalletReady) {
       toast({
-        title: 'Wallet not connected',
-        description: 'Please connect your wallet to make a donation.',
+        title: 'Wallet not ready',
+        description: isConnecting || isReconnecting 
+          ? 'Please wait for wallet to connect...' 
+          : 'Please connect your wallet to make a donation.',
         variant: 'destructive',
       });
       return;
@@ -205,7 +219,7 @@ export function DonationForm() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full px-4 py-3 text-lg pr-16"
-                disabled={isProcessing}
+                disabled={isProcessing || !isWalletReady}
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                 <span className="coffee-text-500 font-medium">USDC</span>
@@ -213,12 +227,12 @@ export function DonationForm() {
             </div>
             <p className="text-sm coffee-text-500 mt-1">
               Minimum donation: $0.01 USDC
-              {isConnected && userBalance !== undefined && (
+              {isWalletReady && userBalance !== undefined && (
                 <span className="ml-2">
                   • Balance: ${userBalance.toFixed(2)} USDC
                 </span>
               )}
-              {isConnected && isLoadingBalance && (
+              {isWalletReady && isLoadingBalance && (
                 <span className="ml-2">• Loading balance...</span>
               )}
             </p>
@@ -232,7 +246,7 @@ export function DonationForm() {
                 type="button"
                 variant="outline"
                 onClick={() => handleQuickAmount(quickAmount)}
-                disabled={isProcessing}
+                disabled={isProcessing || !isWalletReady}
                 className="coffee-bg-100 hover:coffee-bg-200 coffee-text-700 py-2 px-4 rounded-lg font-medium transition-colors duration-200"
               >
                 ${quickAmount}
@@ -243,7 +257,7 @@ export function DonationForm() {
           {/* Donation Button */}
           <Button
             type="submit"
-            disabled={!isConnected || isProcessing || !amount || evaluateInputs.isPending || createExecution.isPending}
+            disabled={!isWalletReady || isProcessing || !amount || evaluateInputs.isPending || createExecution.isPending}
             className="w-full accent-bg-500 hover:accent-bg-600 disabled:bg-gray-300 text-white py-4 px-6 rounded-lg font-semibold text-lg transition-colors duration-200"
           >
             {isProcessing || evaluateInputs.isPending || createExecution.isPending ? (
