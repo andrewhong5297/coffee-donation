@@ -17,7 +17,7 @@ export function DonationForm() {
   const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
+  const { address, status } = useAccount();
   const { switchChain } = useSwitchChain();
   const { toast } = useToast();
   
@@ -25,24 +25,22 @@ export function DonationForm() {
   const createExecution = useCreateExecution();
   const { data: userBalance, isLoading: isLoadingBalance } = useUserBalance();
 
-  // Check if wallet is ready (connected and not in transition states)
-  const isWalletReady = isConnected && !isConnecting && !isReconnecting && !!address;
+  // Check if wallet is ready using proper Wagmi status check
+  const isWalletReady = status === 'connected' && !!address;
   
   // Log wallet states for debugging
   console.log('Wallet states:', { 
-    isConnected, 
-    isConnecting, 
-    isReconnecting, 
+    status,
     address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'none',
     isWalletReady 
   });
 
   // Switch to Base network when wallet connects
   useEffect(() => {
-    if (address && isConnected) {
+    if (address && status === 'connected') {
       switchChain({ chainId: base.id });
     }
-  }, [switchChain, address, isConnected]);
+  }, [switchChain, address, status]);
 
   const { sendTransaction, isPending: isTxPending } = useSendTransaction({
     mutation: {
@@ -97,7 +95,7 @@ export function DonationForm() {
     if (!isWalletReady) {
       toast({
         title: 'Wallet not ready',
-        description: isConnecting || isReconnecting 
+        description: status === 'connecting' || status === 'reconnecting'
           ? 'Please wait for wallet to connect...' 
           : 'Please connect your wallet to make a donation.',
         variant: 'destructive',
