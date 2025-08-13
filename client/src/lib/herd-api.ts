@@ -6,8 +6,15 @@ const TRAIL_CONFIG = {
   versionId: "0197604c-f76a-779a-8f2e-e3ba236da2c6",
   baseApiUrl: "https://trails-api.herd.eco/v1/trails",
   primaryNodeId: "0197604e-691f-7386-85a3-addc4346d6d0", // FiatTokenV2_2.transfer
+  balanceNodeId: "01976052-e67b-7b9c-a6c7-9bb8c4b8c3f7", // USDC balance read node
   stepNumber: 1,
+  trailAppId: "0198a437-d9da-7232-8be9-570229bd756b",
 };
+
+const getApiHeaders = () => ({
+  "Content-Type": "application/json",
+  "Herd-Trail-App-Id": TRAIL_CONFIG.trailAppId,
+});
 
 export interface UserInputs {
   [nodeId: string]: {
@@ -140,9 +147,7 @@ export class HerdAPI {
   ): Promise<EvaluationResponse> {
     const response = await fetch(this.getEvaluationUrl(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify(request),
     });
 
@@ -157,9 +162,7 @@ export class HerdAPI {
   static async createExecution(request: ExecutionRequest): Promise<void> {
     const response = await fetch(this.getExecutionUrl(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify(request),
     });
 
@@ -177,9 +180,7 @@ export class HerdAPI {
   ): Promise<ExecutionHistoryResponse> {
     const response = await fetch(`${this.getExecutionUrl()}/query`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify({
         walletAddresses: [walletAddress],
       }),
@@ -199,13 +200,16 @@ export class HerdAPI {
   }
 
   static buildUserInputs(amount: string): UserInputs {
+    // Convert amount to USDC in wei (multiply by 1,000,000 for 6 decimals)
+    const amountInWei = (parseFloat(amount) * 1_000_000).toString();
+    
     // Based on the trail step data, required user inputs are 'inputs.value' and 'inputs.to'
     // The 'to' address is hardcoded to the same address that was previously creator_hardcoded
     // but now needs to be passed as user input (not shown in UI)
     return {
       [TRAIL_CONFIG.primaryNodeId]: {
         "inputs.value": {
-          value: amount,
+          value: amountInWei,
         },
         "inputs.to": {
           value: "0x2Ae8c972fB2E6c00ddED8986E2dc672ED190DA06",
@@ -217,9 +221,7 @@ export class HerdAPI {
   static async getAllExecutions(): Promise<ExecutionHistoryResponse> {
     const response = await fetch(`${this.getExecutionUrl()}/query`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify({
         walletAddresses: [], // Empty array to get all executions
       }),
@@ -244,9 +246,7 @@ export class HerdAPI {
   ): Promise<ReadNodeResponse> {
     const response = await fetch(this.getReadNodeUrl(nodeId), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getApiHeaders(),
       body: JSON.stringify(request),
     });
 
@@ -260,5 +260,30 @@ export class HerdAPI {
 
   static getTrailConfig() {
     return TRAIL_CONFIG;
+  }
+
+  // Add balance read functionality
+  static async getUserBalance(walletAddress: string): Promise<number> {
+    try {
+      const request: ReadNodeRequest = {
+        walletAddress,
+        execution: { type: "latest" },
+        userInputs: {}
+      };
+
+      const response = await this.readNode(TRAIL_CONFIG.balanceNodeId, request);
+      
+      // Parse balance from the response
+      if (response.outputs && response.outputs.arg_0) {
+        const balanceWei = BigInt(response.outputs.arg_0.value);
+        // Convert from wei to USDC (6 decimals)
+        return Number(balanceWei) / 1_000_000;
+      }
+      
+      return 0;
+    } catch (error) {
+      console.error("Failed to fetch user balance:", error);
+      return 0;
+    }
   }
 }

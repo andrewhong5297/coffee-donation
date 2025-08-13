@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useEvaluateInputs, useCreateExecution } from '@/hooks/use-herd-trail';
+import { useUserBalance } from '@/hooks/use-user-balance';
 import { HerdAPI } from '@/lib/herd-api';
 import { Coffee, Loader2, Heart } from 'lucide-react';
 
@@ -22,6 +23,7 @@ export function DonationForm() {
   
   const evaluateInputs = useEvaluateInputs();
   const createExecution = useCreateExecution();
+  const { data: userBalance, isLoading: isLoadingBalance } = useUserBalance();
 
   // Switch to Base network when wallet connects
   useEffect(() => {
@@ -99,6 +101,16 @@ export function DonationForm() {
       return;
     }
 
+    // Check if user has sufficient balance
+    if (userBalance !== undefined && donationAmount > userBalance) {
+      toast({
+        title: 'Insufficient balance',
+        description: `You don't have enough USDC. Your balance: $${userBalance.toFixed(2)} USDC`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -114,9 +126,9 @@ export function DonationForm() {
       const txHash = await new Promise<string>((resolve, reject) => {
         sendTransaction(
           {
-            to: evaluationResponse.finalContractAddress as `0x${string}`,
+            to: evaluationResponse.contractAddress as `0x${string}`,
             data: evaluationResponse.callData as `0x${string}`,
-            value: BigInt(evaluationResponse.finalPayableAmount || '0'),
+            value: BigInt(evaluationResponse.payableAmount || '0'),
           },
           {
             onSuccess: (hash) => resolve(hash),
@@ -199,7 +211,17 @@ export function DonationForm() {
                 <span className="coffee-text-500 font-medium">USDC</span>
               </div>
             </div>
-            <p className="text-sm coffee-text-500 mt-1">Minimum donation: $0.01 USDC</p>
+            <p className="text-sm coffee-text-500 mt-1">
+              Minimum donation: $0.01 USDC
+              {isConnected && userBalance !== undefined && (
+                <span className="ml-2">
+                  • Balance: ${userBalance.toFixed(2)} USDC
+                </span>
+              )}
+              {isConnected && isLoadingBalance && (
+                <span className="ml-2">• Loading balance...</span>
+              )}
+            </p>
           </div>
 
           {/* Quick Amount Buttons */}
@@ -221,10 +243,10 @@ export function DonationForm() {
           {/* Donation Button */}
           <Button
             type="submit"
-            disabled={!isConnected || isProcessing || isTxPending || !amount}
+            disabled={!isConnected || isProcessing || !amount || evaluateInputs.isPending || createExecution.isPending}
             className="w-full accent-bg-500 hover:accent-bg-600 disabled:bg-gray-300 text-white py-4 px-6 rounded-lg font-semibold text-lg transition-colors duration-200"
           >
-            {isProcessing || isTxPending ? (
+            {isProcessing || evaluateInputs.isPending || createExecution.isPending ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                 Processing donation...
