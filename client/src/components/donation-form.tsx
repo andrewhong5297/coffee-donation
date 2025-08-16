@@ -153,7 +153,7 @@ export function DonationForm() {
       await createExecution.mutateAsync({
         nodeId: HerdAPI.getTrailConfig().primaryNodeId,
         transactionHash: txHash,
-        walletAddress: address,
+        walletAddress: address!,
         execution: { type: "latest" },
       });
 
