@@ -111,22 +111,22 @@ export function useDonationAmounts() {
                 
                 const readResponse = await HerdAPI.readNode(HerdAPI.getTrailConfig().primaryNodeId, readRequest);
                 
-                console.log(`Read API response for ${walletExecution.walletAddress}-${execution.id}:`, readResponse);
+                // console.log(`Read API response for ${walletExecution.walletAddress}-${execution.id}:`, readResponse);
                 
                 // Extract the donation amount from the read response
                 // For write_function node type, response format is: { inputs: nested_json, outputs: nested_json }
                 let donationAmount = 5; // Default fallback
                 
                 if (readResponse.inputs) {
-                  console.log('Inputs structure:', readResponse.inputs);
+                  // console.log('Inputs structure:', readResponse.inputs);
                   
                   // The API returns the exact format we need: inputs.value.value contains the USDC amount
                   if (readResponse.inputs.value && readResponse.inputs.value.value) {
                     // Convert from USDC wei (6 decimals) to dollars
                     donationAmount = parseFloat(readResponse.inputs.value.value) / 1000000;
-                    console.log('Found donation amount:', donationAmount, 'USDC');
+                    // console.log( 'Found donation amount:', donationAmount, 'USDC');
                   } else {
-                    console.log('Value field not found in expected location');
+                    // console.log('Value field not found in expected location');
                   }
                 }
                 

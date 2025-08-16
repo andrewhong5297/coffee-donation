@@ -201,7 +201,7 @@ export class HerdAPI {
 
   static buildUserInputs(amount: string): UserInputs {
     // Amount is already in the correct format, no decimal conversion needed
-    console.log(`Using donation amount as-is: ${amount}`);
+    // console.log(`Using donation amount as-is: ${amount}`);
     
     // Based on the trail step data, required user inputs are 'inputs.value' and 'inputs.to'
     // The 'to' address is hardcoded to the same address that was previously creator_hardcoded
@@ -271,23 +271,23 @@ export class HerdAPI {
         userInputs: {}
       };
 
-      console.log(`Fetching balance for wallet: ${walletAddress}`);
+      // console.log(`Fetching balance for wallet: ${walletAddress}`);
       const response = await this.readNode(TRAIL_CONFIG.balanceNodeId, request);
-      console.log("Balance API response:", response);
+      // console.log("Balance API response:", response);
       
       // Parse balance from the response
       if (response.outputs && response.outputs.arg_0) {
         const balanceWei = BigInt(response.outputs.arg_0.value);
         // Convert from wei to USDC (6 decimals)
         const balance = Number(balanceWei) / 1_000_000;
-        console.log(`Parsed balance: ${balance} USDC from raw value: ${response.outputs.arg_0.value}`);
+        // console.log(`Parsed balance: ${balance} USDC from raw value: ${response.outputs.arg_0.value}`);
         return balance;
       }
       
-      console.log("No balance data found in response");
+      // console.log("No balance data found in response");
       return 0;
     } catch (error) {
-      console.error("Failed to fetch user balance:", error);
+      // console.error("Failed to fetch user balance:", error);
       return 0;
     }
   }
