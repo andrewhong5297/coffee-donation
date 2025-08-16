@@ -16,6 +16,7 @@ const QUICK_AMOUNTS = [5, 10, 25, 50];
 export function DonationForm() {
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isWalletReady, setIsWalletReady] = useState(false);
 
   const { address, status } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -25,20 +26,19 @@ export function DonationForm() {
   const createExecution = useCreateExecution();
   const { data: userBalance, isLoading: isLoadingBalance } = useUserBalance();
 
-  // Check if wallet is ready using proper Wagmi status check
-  const isWalletReady = status === "connected" || status === "connecting";
-
-  // Log wallet states for debugging
-  console.log("Wallet states:", {
-    status,
-    address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "none",
-    isWalletReady,
-  });
-
   // Switch to Base network when wallet connects
   useEffect(() => {
+    console.log("Wallet states:", {
+      status,
+      address: address
+        ? `${address.slice(0, 6)}...${address.slice(-4)}`
+        : "none",
+      isWalletReady,
+    });
+
     if (address && status === "connected") {
       switchChain({ chainId: base.id });
+      setIsWalletReady(true);
     }
   }, [switchChain, address, status]);
 
