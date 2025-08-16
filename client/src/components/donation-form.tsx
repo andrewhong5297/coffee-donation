@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAccount, useSendTransaction, useSwitchChain } from "wagmi";
+import { useAccount, useSendTransaction, useSwitchChain, useChainId } from "wagmi";
 import { base } from "wagmi/chains";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,27 +20,57 @@ export function DonationForm() {
 
   const { address, status } = useAccount();
   const { switchChain } = useSwitchChain();
+  const chainId = useChainId();
   const { toast } = useToast();
 
   const evaluateInputs = useEvaluateInputs();
   const createExecution = useCreateExecution();
   const { data: userBalance, isLoading: isLoadingBalance } = useUserBalance();
 
-  // Switch to Base network when wallet connects
+  // Manage wallet connection and chain switching
   useEffect(() => {
     console.log("Wallet states:", {
       status,
       address: address
         ? `${address.slice(0, 6)}...${address.slice(-4)}`
         : "none",
+      chainId,
+      isOnBaseNetwork: chainId === base.id,
       isWalletReady,
     });
 
-    if (address && status === "connected") {
-      switchChain({ chainId: base.id });
-      setIsWalletReady(true);
-    }
-  }, [switchChain, address, status]);
+    const updateWalletReadyState = async () => {
+      // Reset wallet ready state first
+      setIsWalletReady(false);
+
+      // Check if wallet is connected and we have an address
+      if (!address || status !== "connected") {
+        return;
+      }
+
+      // Check if we're on the correct chain
+      if (chainId === base.id) {
+        setIsWalletReady(true);
+        return;
+      }
+
+      // If we're on the wrong chain, try to switch
+      try {
+        await switchChain({ chainId: base.id });
+        // Note: The chainId will update through useChainId hook, 
+        // and this effect will run again to set isWalletReady to true
+      } catch (error) {
+        console.error("Failed to switch to Base network:", error);
+        toast({
+          title: "Network Switch Required",
+          description: "Please manually switch to Base network to continue.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    updateWalletReadyState();
+  }, [address, status, chainId, switchChain, toast]);
 
   const { sendTransaction, isPending: isTxPending } = useSendTransaction({
     mutation: {
@@ -187,6 +217,23 @@ export function DonationForm() {
             Make a Donation
           </h3>
           <p className="coffee-text-600">Support with USDC on Base network</p>
+          
+          {/* Network Status Indicator */}
+          {address && status === "connected" && (
+            <div className="mt-3">
+              {chainId === base.id ? (
+                <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  Connected to Base Network
+                </div>
+              ) : (
+                <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full mr-2"></div>
+                  Switching to Base Network...
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Step Progress Indicator */}
