@@ -92,6 +92,13 @@ The application follows a full-stack architecture with clear separation between 
 
 ## Changelog
 
+- January 16, 2025. Fixed wallet connection state detection and decimal multiplication bug
+  - Implemented proper Wagmi status checking using `status === 'connected'` instead of deprecated `isConnected`
+  - Fixed decimal multiplication bug in donation submission by moving conversion to form level
+  - Updated balance node ID to correct value: "01989ee5-c66c-7eb5-9728-faaa6ec696c9"
+  - Enhanced wallet state logging for debugging connection issues
+  - Fixed duplicate Wagmi providers causing connection conflicts
+  - Identified WalletConnect Project ID requirement for proper wallet connections in Replit
 - July 4, 2025. Updated donation platform to use new Herd API structure with real donation amounts
   - Implemented read API calls to fetch actual USDC donation amounts from blockchain
   - Updated both Community Donations and Your Donations sections to display real amounts

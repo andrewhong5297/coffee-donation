@@ -19,7 +19,7 @@ export const wagmiConfig = createConfig(
 
     // Optional App Info
     appDescription: "Support creators with USDC donations on Base network",
-    appUrl: "https://buymeacoffee.replit.app",
+    appUrl: typeof window !== 'undefined' ? window.location.origin : "https://buymeacoffee.replit.app",
     appIcon: "https://family.co/logo.png", // Using placeholder for now
   }),
 );
